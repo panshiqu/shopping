@@ -21,6 +21,7 @@ type jdPrice struct {
 
 type jdPageConfig struct {
 	SkuID int64
+	Cat   []int64
 }
 
 func getURL(url string) ([]byte, error) {
@@ -67,6 +68,17 @@ func getString(vm *otto.Otto, in string) string {
 	return ""
 }
 
+func getIntSlice(vm *otto.Otto, in string) []int64 {
+	if v, err := vm.Run(in); err == nil {
+		if v, err := v.Export(); err == nil {
+			if v, ok := v.([]int64); ok {
+				return v
+			}
+		}
+	}
+	return nil
+}
+
 func js2Go(in []byte) (*jdPageConfig, error) {
 	vm := otto.New()
 	if _, err := vm.Run(in); err != nil {
@@ -74,6 +86,7 @@ func js2Go(in []byte) (*jdPageConfig, error) {
 	}
 	return &jdPageConfig{
 		SkuID: getInt(vm, "pageConfig.product.skuid"),
+		Cat:   getIntSlice(vm, "pageConfig.product.cat"),
 	}, nil
 }
 
