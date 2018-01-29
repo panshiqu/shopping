@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -12,6 +13,11 @@ import (
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 )
+
+type jdPrice struct {
+	Price       string `json:"p"`
+	OriginPrice string `json:"op"`
+}
 
 type jdPageConfig struct {
 	SkuID int64
@@ -71,6 +77,18 @@ func js2Go(in []byte) (*jdPageConfig, error) {
 	}, nil
 }
 
+func getJDPrice(in *jdPageConfig) (*jdPrice, error) {
+	body, err := getURL(fmt.Sprintf("https://p.3.cn/prices/mgets?skuIds=J_%d", in.SkuID))
+	if err != nil {
+		return nil, err
+	}
+	var jdps []*jdPrice
+	if err := json.Unmarshal(body, &jdps); err != nil {
+		return nil, err
+	}
+	return jdps[0], nil
+}
+
 func main() {
 	body, err := getURL("https://item.jd.com/1268059.html")
 	if err != nil {
@@ -93,4 +111,11 @@ func main() {
 	}
 
 	fmt.Println(jdpc)
+
+	jdp, err := getJDPrice(jdpc)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(jdp)
 }
