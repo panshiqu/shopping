@@ -19,9 +19,23 @@ type jdPrice struct {
 	OriginPrice string `json:"op"`
 }
 
+type jdPromotion struct {
+}
+
 type jdPageConfig struct {
 	SkuID int64
 	Cat   []int64
+}
+
+func (j *jdPageConfig) JoinCat() []byte {
+	if len(j.Cat) == 0 {
+		return nil
+	}
+	var buf bytes.Buffer
+	for _, v := range j.Cat {
+		fmt.Fprint(&buf, v, ",")
+	}
+	return buf.Bytes()[:buf.Len()-1]
 }
 
 func getURL(url string) ([]byte, error) {
@@ -100,6 +114,10 @@ func getJDPrice(in *jdPageConfig) (*jdPrice, error) {
 		return nil, err
 	}
 	return jdps[0], nil
+}
+
+func getJDPromotion(in *jdPageConfig) (*jdPromotion, error) {
+	return nil, nil
 }
 
 func main() {
