@@ -19,7 +19,73 @@ type jdPrice struct {
 	OriginPrice string `json:"op"`
 }
 
-type jdPromotion struct {
+type jdInfo struct {
+	Quan       json.RawMessage `json:"quan"`
+	SkuCoupon  []*jdSkuCoupon  `json:"skuCoupon"`
+	AdsStatus  int64           `json:"adsStatus"`
+	Ads        []*jdAds        `json:"ads"`
+	QuanStatus int64           `json:"quanStatus"`
+	PromStatus int64           `json:"promStatus"`
+	Prom       *jdProm         `json:"prom"`
+
+	Quans []*jdQuan
+}
+
+type jdQuan struct {
+	Title  string `json:"title"`
+	ActURL string `json:"actUrl"`
+}
+
+type jdSkuCoupon struct {
+	CouponType   int64           `json:"couponType"`
+	TrueDiscount int64           `json:"trueDiscount"`
+	CouponKind   int64           `json:"couponKind"`
+	DiscountDesc string          `json:"discountDesc"`
+	BeginTime    string          `json:"beginTime"`
+	UserClass    int64           `json:"userClass"`
+	URL          string          `json:"url"`
+	OverlapDesc  json.RawMessage `json:"overlapDesc"`
+	CouponStyle  int64           `json:"couponStyle"`
+	Area         int64           `json:"area"`
+	HourCoupon   int64           `json:"hourCoupon"`
+	Overlap      int64           `json:"overlap"`
+	EndTime      string          `json:"endTime"`
+	Key          string          `json:"key"`
+	AddDays      int64           `json:"addDays"`
+	Quota        int64           `json:"quota"`
+	ToURL        string          `json:"toUrl"`
+	TimeDesc     string          `json:"timeDesc"`
+	RoleID       int64           `json:"roleId"`
+	Discount     int64           `json:"discount"`
+	DiscountFlag int64           `json:"discountFlag"`
+	LimitType    int64           `json:"limitType"`
+	Name         string          `json:"name"`
+	BatchID      int64           `json:"batchId"`
+}
+
+type jdAds struct {
+	ID string `json:"id"`
+	Ad string `json:"ad"`
+}
+
+type jdProm struct {
+	Hit        int64           `json:"hit"`
+	PickOneTag []*jdTag        `json:"pickOneTag"`
+	CarGift    int64           `json:"carGift"`
+	Tags       []*jdTag        `json:"tags"`
+	GiftPool   json.RawMessage `json:"giftPool"`
+	Ending     int64           `json:"ending"`
+}
+
+type jdTag struct {
+	D       string `json:"d"`
+	St      string `json:"st"`
+	Code    string `json:"code"`
+	Content string `json:"content"`
+	Tr      int64  `json:"tr"`
+	AdURL   string `json:"adurl,omitempty"`
+	Name    string `json:"name"`
+	Pid     string `json:"pid"`
 }
 
 type jdPageConfig struct {
@@ -116,8 +182,31 @@ func getJDPrice(in *jdPageConfig) (*jdPrice, error) {
 	return jdps[0], nil
 }
 
-func getJDPromotion(in *jdPageConfig) (*jdPromotion, error) {
-	return nil, nil
+func getJDInfo(in *jdPageConfig) (*jdInfo, error) {
+	body, err := getURL(fmt.Sprintf("https://cd.jd.com/promotion/v2?skuId=%d&area=7_412_47301_0&cat=%s", in.SkuID, in.JoinCat()))
+	if err != nil {
+		return nil, err
+	}
+	body, err = gbk2utf8(body)
+	if err != nil {
+		return nil, err
+	}
+	jdi := &jdInfo{}
+	if err := json.Unmarshal(body, jdi); err != nil {
+		return nil, err
+	}
+	if jdi.Quan[0] == '[' {
+		if err := json.Unmarshal(jdi.Quan, &jdi.Quans); err != nil {
+			return nil, err
+		}
+	} else {
+		jdq := &jdQuan{}
+		if err := json.Unmarshal(jdi.Quan, jdq); err != nil {
+			return nil, err
+		}
+		jdi.Quans = append(jdi.Quans, jdq)
+	}
+	return jdi, nil
 }
 
 func main() {
@@ -149,4 +238,11 @@ func main() {
 	}
 
 	fmt.Println(jdp)
+
+	jdi, err := getJDInfo(jdpc)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(jdi)
 }
