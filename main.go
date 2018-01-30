@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"text/template"
 	"time"
 
 	"github.com/robertkrimen/otto"
@@ -15,9 +16,16 @@ import (
 	"golang.org/x/text/transform"
 )
 
-var tem = `<html><body><table>
-{{range .}} {{.}} {{end}}
+const index = `<html><body><table>
+{{range .}} <tr><td colspan="2">{{.Price}}</td></tr>{{.Content}} {{end}}
 </table></body></html>`
+
+var indexT = template.Must(template.New("index").Parse(index))
+
+type indexP struct {
+	Price   string
+	Content string
+}
 
 type jdPrice struct {
 	Price       string `json:"p"`
@@ -184,7 +192,7 @@ func js2Go(in []byte) (*jdPageConfig, error) {
 		Name:        getString(vm, "pageConfig.product.name"),
 		KoBeginTime: getInt(vm, "pageConfig.product.koBeginTime"),
 		KoEndTime:   getInt(vm, "pageConfig.product.koEndTime"),
-		Src:         fmt.Sprintf("http://img14.360buyimg.com/n2/%s", getString(vm, "pageConfig.product.src")),
+		Src:         fmt.Sprintf("http://img14.360buyimg.com/n1/%s", getString(vm, "pageConfig.product.src")),
 		Cat:         getIntSlice(vm, "pageConfig.product.cat"),
 	}, nil
 }
@@ -273,6 +281,10 @@ func serializeHTML(jdi *jdInfo, jdpc *jdPageConfig) string {
 	return buf.String()
 }
 
+func procRequest(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func main() {
 	body, err := getURL("https://item.jd.com/1268059.html")
 	if err != nil {
@@ -306,5 +318,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(serializeHTML(jdi, jdpc))
+	fmt.Println(jdi)
+
+	http.HandleFunc("/", procRequest)
+	log.Fatal(http.ListenAndServe(":80", nil))
 }
