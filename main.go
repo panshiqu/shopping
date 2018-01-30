@@ -180,7 +180,7 @@ func js2Go(in []byte) (*jdPageConfig, error) {
 		Name:        getString(vm, "pageConfig.product.name"),
 		KoBeginTime: getInt(vm, "pageConfig.product.koBeginTime"),
 		KoEndTime:   getInt(vm, "pageConfig.product.koEndTime"),
-		Src:         fmt.Sprintf("http://img14.360buyimg.com/n1/%s", getString(vm, "pageConfig.product.src")),
+		Src:         fmt.Sprintf("http://img14.360buyimg.com/n2/%s", getString(vm, "pageConfig.product.src")),
 		Cat:         getIntSlice(vm, "pageConfig.product.cat"),
 	}, nil
 }
@@ -261,7 +261,7 @@ func serializeHTML(jdi *jdInfo, jdpc *jdPageConfig) string {
 			fmt.Fprintf(&buf, "【%s】%s<br />", v.Name, v.Content)
 		}
 	}
-	return buf.String()
+	return string(bytes.TrimRight(buf.Bytes(), "<br />"))
 }
 
 func main() {
