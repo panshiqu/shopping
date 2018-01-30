@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/robertkrimen/otto"
 	"golang.org/x/text/encoding/simplifiedchinese"
@@ -95,8 +96,12 @@ type jdTag struct {
 }
 
 type jdPageConfig struct {
-	SkuID int64
-	Cat   []int64
+	SkuID       int64
+	Name        string
+	KoBeginTime int64
+	KoEndTime   int64
+	Src         string
+	Cat         []int64
 }
 
 func (j *jdPageConfig) JoinCat() []byte {
@@ -171,8 +176,12 @@ func js2Go(in []byte) (*jdPageConfig, error) {
 		return nil, err
 	}
 	return &jdPageConfig{
-		SkuID: getInt(vm, "pageConfig.product.skuid"),
-		Cat:   getIntSlice(vm, "pageConfig.product.cat"),
+		SkuID:       getInt(vm, "pageConfig.product.skuid"),
+		Name:        getString(vm, "pageConfig.product.name"),
+		KoBeginTime: getInt(vm, "pageConfig.product.koBeginTime"),
+		KoEndTime:   getInt(vm, "pageConfig.product.koEndTime"),
+		Src:         fmt.Sprintf("http://img14.360buyimg.com/n1/%s", getString(vm, "pageConfig.product.src")),
+		Cat:         getIntSlice(vm, "pageConfig.product.cat"),
 	}, nil
 }
 
@@ -215,9 +224,16 @@ func getJDInfo(in *jdPageConfig) (*jdInfo, error) {
 	return jdi, nil
 }
 
-func serializeHTML(in *jdInfo) string {
+func serializeHTML(jdi *jdInfo, jdpc *jdPageConfig) string {
 	var buf bytes.Buffer
-	for _, v := range in.SkuCoupon {
+	if jdpc.KoBeginTime != 0 {
+		fmt.Fprintf(&buf, "【京东秒杀%s开始】", time.Unix(jdpc.KoBeginTime/1000, 0).Format("01-02 15:04"))
+	}
+	if jdpc.KoEndTime != 0 {
+		fmt.Fprintf(&buf, "【京东秒杀%s结束】", time.Unix(jdpc.KoEndTime/1000, 0).Format("01-02 15:04"))
+	}
+	fmt.Fprintf(&buf, "%s<br />", jdpc.Name)
+	for _, v := range jdi.SkuCoupon {
 		switch v.CouponStyle {
 		case 0:
 			fmt.Fprintf(&buf, "【满%d减%d】%s %s %s<br />", v.Quota, v.Discount, v.TimeDesc, v.Name, v.OverlapDesc)
@@ -227,18 +243,18 @@ func serializeHTML(in *jdInfo) string {
 			fmt.Fprintf(&buf, "Unknown Coupon Style: %d<br />", v.CouponStyle)
 		}
 	}
-	for _, v := range in.Ads {
+	for _, v := range jdi.Ads {
 		if v.Ad != "" {
 			fmt.Fprintf(&buf, "%s<br />", v.Ad)
 		}
 	}
-	for _, v := range in.Quans {
+	for _, v := range jdi.Quans {
 		fmt.Fprintf(&buf, "<a href='%s' target='_blank'>%s</a><br />", v.ActURL, v.Title)
 	}
-	for _, v := range in.Prom.PickOneTag {
+	for _, v := range jdi.Prom.PickOneTag {
 		fmt.Fprintf(&buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
 	}
-	for _, v := range in.Prom.Tags {
+	for _, v := range jdi.Prom.Tags {
 		if v.AdURL != "" {
 			fmt.Fprintf(&buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
 		} else {
@@ -283,5 +299,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(serializeHTML(jdi))
+	fmt.Println(serializeHTML(jdi, jdpc))
 }
