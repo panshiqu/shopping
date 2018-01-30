@@ -37,30 +37,36 @@ type jdQuan struct {
 }
 
 type jdSkuCoupon struct {
-	CouponType   int64           `json:"couponType"`
-	TrueDiscount int64           `json:"trueDiscount"`
-	CouponKind   int64           `json:"couponKind"`
-	DiscountDesc string          `json:"discountDesc"`
-	BeginTime    string          `json:"beginTime"`
-	UserClass    int64           `json:"userClass"`
-	URL          string          `json:"url"`
-	OverlapDesc  json.RawMessage `json:"overlapDesc"`
-	CouponStyle  int64           `json:"couponStyle"`
-	Area         int64           `json:"area"`
-	HourCoupon   int64           `json:"hourCoupon"`
-	Overlap      int64           `json:"overlap"`
-	EndTime      string          `json:"endTime"`
-	Key          string          `json:"key"`
-	AddDays      int64           `json:"addDays"`
-	Quota        int64           `json:"quota"`
-	ToURL        string          `json:"toUrl"`
-	TimeDesc     string          `json:"timeDesc"`
-	RoleID       int64           `json:"roleId"`
-	Discount     int64           `json:"discount"`
-	DiscountFlag int64           `json:"discountFlag"`
-	LimitType    int64           `json:"limitType"`
-	Name         string          `json:"name"`
-	BatchID      int64           `json:"batchId"`
+	CouponType   int64   `json:"couponType"`
+	TrueDiscount float64 `json:"trueDiscount"`
+	CouponKind   int64   `json:"couponKind"`
+	DiscountDesc string  `json:"discountDesc"`
+	BeginTime    string  `json:"beginTime"`
+	UserClass    int64   `json:"userClass"`
+	URL          string  `json:"url"`
+	OverlapDesc  string  `json:"overlapDesc"`
+	CouponStyle  int64   `json:"couponStyle"`
+	Area         int64   `json:"area"`
+	HourCoupon   int64   `json:"hourCoupon"`
+	Overlap      int64   `json:"overlap"`
+	EndTime      string  `json:"endTime"`
+	Key          string  `json:"key"`
+	AddDays      int64   `json:"addDays"`
+	Quota        int64   `json:"quota"`
+	ToURL        string  `json:"toUrl"`
+	TimeDesc     string  `json:"timeDesc"`
+	RoleID       int64   `json:"roleId"`
+	Discount     int64   `json:"discount"`
+	DiscountFlag int64   `json:"discountFlag"`
+	LimitType    int64   `json:"limitType"`
+	Name         string  `json:"name"`
+	BatchID      int64   `json:"batchId"`
+
+	AllDesc      string          `json:"allDesc"`
+	DiscountJSON json.RawMessage `json:"discountJson"`
+	SimDesc      string          `json:"simDesc"`
+	HighCount    int64           `json:"highCount"`
+	HighDesc     string          `json:"highDesc"`
 }
 
 type jdAds struct {
@@ -209,6 +215,39 @@ func getJDInfo(in *jdPageConfig) (*jdInfo, error) {
 	return jdi, nil
 }
 
+func serializeHTML(in *jdInfo) string {
+	var buf bytes.Buffer
+	for _, v := range in.SkuCoupon {
+		switch v.CouponStyle {
+		case 0:
+			fmt.Fprintf(&buf, "【满%d减%d】%s %s %s<br />", v.Quota, v.Discount, v.TimeDesc, v.Name, v.OverlapDesc)
+		case 3:
+			fmt.Fprintf(&buf, "【%s-%s】%s %s %s<br />", v.AllDesc, v.HighDesc, v.TimeDesc, v.Name, v.OverlapDesc)
+		default:
+			fmt.Fprintf(&buf, "Unknown Coupon Style: %d<br />", v.CouponStyle)
+		}
+	}
+	for _, v := range in.Ads {
+		if v.Ad != "" {
+			fmt.Fprintf(&buf, "%s<br />", v.Ad)
+		}
+	}
+	for _, v := range in.Quans {
+		fmt.Fprintf(&buf, "<a href='%s' target='_blank'>%s</a><br />", v.ActURL, v.Title)
+	}
+	for _, v := range in.Prom.PickOneTag {
+		fmt.Fprintf(&buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
+	}
+	for _, v := range in.Prom.Tags {
+		if v.AdURL != "" {
+			fmt.Fprintf(&buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
+		} else {
+			fmt.Fprintf(&buf, "【%s】%s<br />", v.Name, v.Content)
+		}
+	}
+	return buf.String()
+}
+
 func main() {
 	body, err := getURL("https://item.jd.com/1268059.html")
 	if err != nil {
@@ -244,5 +283,5 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(jdi)
+	fmt.Println(serializeHTML(jdi))
 }
