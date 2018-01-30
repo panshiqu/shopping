@@ -15,6 +15,10 @@ import (
 	"golang.org/x/text/transform"
 )
 
+var tem = `<html><body><table>
+{{range .}} {{.}} {{end}}
+</table></body></html>`
+
 type jdPrice struct {
 	Price       string `json:"p"`
 	OriginPrice string `json:"op"`
@@ -226,13 +230,14 @@ func getJDInfo(in *jdPageConfig) (*jdInfo, error) {
 
 func serializeHTML(jdi *jdInfo, jdpc *jdPageConfig) string {
 	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "<tr><td><a href='https://item.jd.com/%d.html' target='_blank'><img src='%s' /></a></td><td>", jdpc.SkuID, jdpc.Src)
 	if jdpc.KoBeginTime != 0 {
 		fmt.Fprintf(&buf, "【京东秒杀%s开始】", time.Unix(jdpc.KoBeginTime/1000, 0).Format("01-02 15:04"))
 	}
 	if jdpc.KoEndTime != 0 {
 		fmt.Fprintf(&buf, "【京东秒杀%s结束】", time.Unix(jdpc.KoEndTime/1000, 0).Format("01-02 15:04"))
 	}
-	fmt.Fprintf(&buf, "%s<br />", jdpc.Name)
+	fmt.Fprintf(&buf, "<a href='https://item.jd.com/%d.html' target='_blank'>%s</a><br />", jdpc.SkuID, jdpc.Name)
 	for _, v := range jdi.SkuCoupon {
 		switch v.CouponStyle {
 		case 0:
@@ -261,7 +266,11 @@ func serializeHTML(jdi *jdInfo, jdpc *jdPageConfig) string {
 			fmt.Fprintf(&buf, "【%s】%s<br />", v.Name, v.Content)
 		}
 	}
-	return string(bytes.TrimRight(buf.Bytes(), "<br />"))
+	if bytes.HasSuffix(buf.Bytes(), []byte("<br />")) {
+		buf.Truncate(buf.Len() - 6)
+	}
+	fmt.Fprintf(&buf, "</td></tr>")
+	return buf.String()
 }
 
 func main() {
@@ -284,8 +293,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	fmt.Println(jdpc)
 
 	jdp, err := getJDPrice(jdpc)
 	if err != nil {
