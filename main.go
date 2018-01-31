@@ -314,7 +314,7 @@ func jdSpider(in int) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec("INSERT INTO jd (price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?)", jdp.Price, serializeHTML(jdi, jdpc), pdt, idt, pc); err != nil {
+	if _, err := db.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", jdpc.SkuID, jdp.Price, serializeHTML(jdi, jdpc), pdt, idt, pc); err != nil {
 		return err
 	}
 	return nil
