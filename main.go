@@ -20,11 +20,15 @@ import (
 
 var db *sql.DB
 
-const index = `<html><body><table>
+var indexT *template.Template
+
+const (
+	index = `<html><body><table>
 {{range .}} <tr><td colspan="2">{{.Price}}</td></tr>{{.Content}} {{end}}
 </table></body></html>`
 
-var indexT = template.Must(template.New("index").Parse(index))
+	dataSource = "root@tcp(localhost:3306)/shopping?charset=utf8mb4"
+)
 
 type indexP struct {
 	Price   string
@@ -321,16 +325,26 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	var err error
-
-	if db, err = sql.Open("mysql", "root@tcp(localhost:3306)/shopping?charset=utf8mb4;"); err != nil {
-		log.Fatal(err)
-	}
-
 	if err := jdSpider(3311987); err != nil {
 		log.Fatal(err)
 	}
 
 	http.HandleFunc("/", procRequest)
 	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func init() {
+	var err error
+
+	if indexT, err = template.New("index").Parse(index); err != nil {
+		log.Fatal(err)
+	}
+
+	if db, err = sql.Open("mysql", dataSource); err != nil {
+		log.Fatal(err)
+	}
+
+	if err = db.Ping(); err != nil {
+		log.Fatal(err)
+	}
 }
