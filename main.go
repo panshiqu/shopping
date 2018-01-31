@@ -13,6 +13,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/panshiqu/shopping/db"
+	"github.com/panshiqu/shopping/define"
 	"github.com/robertkrimen/otto"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
@@ -27,106 +28,6 @@ const index = `<html><body><table>
 type indexP struct {
 	Price   string
 	Content string
-}
-
-type jdPrice struct {
-	Price       string `json:"p"`
-	OriginPrice string `json:"op"`
-}
-
-type jdInfo struct {
-	Quan       json.RawMessage `json:"quan"`
-	SkuCoupon  []*jdSkuCoupon  `json:"skuCoupon"`
-	AdsStatus  int64           `json:"adsStatus"`
-	Ads        []*jdAds        `json:"ads"`
-	QuanStatus int64           `json:"quanStatus"`
-	PromStatus int64           `json:"promStatus"`
-	Prom       *jdProm         `json:"prom"`
-
-	Quans []*jdQuan
-}
-
-type jdQuan struct {
-	Title  string `json:"title"`
-	ActURL string `json:"actUrl"`
-}
-
-type jdSkuCoupon struct {
-	CouponType   int64   `json:"couponType"`
-	TrueDiscount float64 `json:"trueDiscount"`
-	CouponKind   int64   `json:"couponKind"`
-	DiscountDesc string  `json:"discountDesc"`
-	BeginTime    string  `json:"beginTime"`
-	UserClass    int64   `json:"userClass"`
-	URL          string  `json:"url"`
-	OverlapDesc  string  `json:"overlapDesc"`
-	CouponStyle  int64   `json:"couponStyle"`
-	Area         int64   `json:"area"`
-	HourCoupon   int64   `json:"hourCoupon"`
-	Overlap      int64   `json:"overlap"`
-	EndTime      string  `json:"endTime"`
-	Key          string  `json:"key"`
-	AddDays      int64   `json:"addDays"`
-	Quota        int64   `json:"quota"`
-	ToURL        string  `json:"toUrl"`
-	TimeDesc     string  `json:"timeDesc"`
-	RoleID       int64   `json:"roleId"`
-	Discount     int64   `json:"discount"`
-	DiscountFlag int64   `json:"discountFlag"`
-	LimitType    int64   `json:"limitType"`
-	Name         string  `json:"name"`
-	BatchID      int64   `json:"batchId"`
-
-	AllDesc      string          `json:"allDesc"`
-	DiscountJSON json.RawMessage `json:"discountJson"`
-	SimDesc      string          `json:"simDesc"`
-	HighCount    int64           `json:"highCount"`
-	HighDesc     string          `json:"highDesc"`
-}
-
-type jdAds struct {
-	ID string `json:"id"`
-	Ad string `json:"ad"`
-}
-
-type jdProm struct {
-	Hit        int64           `json:"hit"`
-	PickOneTag []*jdTag        `json:"pickOneTag"`
-	CarGift    int64           `json:"carGift"`
-	Tags       []*jdTag        `json:"tags"`
-	GiftPool   json.RawMessage `json:"giftPool"`
-	Ending     int64           `json:"ending"`
-}
-
-type jdTag struct {
-	D       string `json:"d"`
-	St      string `json:"st"`
-	Code    string `json:"code"`
-	Content string `json:"content"`
-	Tr      int64  `json:"tr"`
-	AdURL   string `json:"adurl,omitempty"`
-	Name    string `json:"name"`
-	Pid     string `json:"pid"`
-}
-
-type jdPageConfig struct {
-	SkuID       int64
-	Name        string
-	KoBeginTime int64
-	KoEndTime   int64
-	Src         string
-	Cat         []int64
-}
-
-func (j *jdPageConfig) JoinCat() []byte {
-	if len(j.Cat) == 0 {
-		return nil
-	}
-	var buf bytes.Buffer
-	for _, v := range j.Cat {
-		fmt.Fprint(&buf, v, ",")
-	}
-	return buf.Bytes()[:buf.Len()-1]
 }
 
 func getURL(url string) ([]byte, error) {
@@ -184,12 +85,12 @@ func getIntSlice(vm *otto.Otto, in string) []int64 {
 	return nil
 }
 
-func js2Go(in []byte) (*jdPageConfig, error) {
+func js2Go(in []byte) (*define.JDPageConfig, error) {
 	vm := otto.New()
 	if _, err := vm.Run(in); err != nil {
 		return nil, err
 	}
-	return &jdPageConfig{
+	return &define.JDPageConfig{
 		SkuID:       getInt(vm, "pageConfig.product.skuid"),
 		Name:        getString(vm, "pageConfig.product.name"),
 		KoBeginTime: getInt(vm, "pageConfig.product.koBeginTime"),
@@ -199,19 +100,19 @@ func js2Go(in []byte) (*jdPageConfig, error) {
 	}, nil
 }
 
-func getJDPrice(in *jdPageConfig) (*jdPrice, []byte, error) {
+func getJDPrice(in *define.JDPageConfig) (*define.JDPrice, []byte, error) {
 	body, err := getURL(fmt.Sprintf("https://p.3.cn/prices/mgets?skuIds=J_%d", in.SkuID))
 	if err != nil {
 		return nil, nil, err
 	}
-	var jdps []*jdPrice
+	var jdps []*define.JDPrice
 	if err := json.Unmarshal(body, &jdps); err != nil {
 		return nil, nil, err
 	}
 	return jdps[0], body, nil
 }
 
-func getJDInfo(in *jdPageConfig) (*jdInfo, []byte, error) {
+func getJDInfo(in *define.JDPageConfig) (*define.JDInfo, []byte, error) {
 	body, err := getURL(fmt.Sprintf("https://cd.jd.com/promotion/v2?skuId=%d&area=7_412_47301_0&cat=%s", in.SkuID, in.JoinCat()))
 	if err != nil {
 		return nil, nil, err
@@ -220,7 +121,7 @@ func getJDInfo(in *jdPageConfig) (*jdInfo, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	jdi := &jdInfo{}
+	jdi := &define.JDInfo{}
 	if err := json.Unmarshal(body, jdi); err != nil {
 		return nil, nil, err
 	}
@@ -229,7 +130,7 @@ func getJDInfo(in *jdPageConfig) (*jdInfo, []byte, error) {
 			return nil, nil, err
 		}
 	} else {
-		jdq := &jdQuan{}
+		jdq := &define.JDQuan{}
 		if err := json.Unmarshal(jdi.Quan, jdq); err != nil {
 			return nil, nil, err
 		}
@@ -238,7 +139,7 @@ func getJDInfo(in *jdPageConfig) (*jdInfo, []byte, error) {
 	return jdi, body, nil
 }
 
-func serializeHTML(jdi *jdInfo, jdpc *jdPageConfig) string {
+func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "<tr><td><a href='https://item.jd.com/%d.html' target='_blank'><img src='%s' /></a></td><td>", jdpc.SkuID, jdpc.Src)
 	if jdpc.KoBeginTime != 0 {
