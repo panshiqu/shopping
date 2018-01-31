@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,10 +12,13 @@ import (
 	"text/template"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/robertkrimen/otto"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 )
+
+var db *sql.DB
 
 const index = `<html><body><table>
 {{range .}} <tr><td colspan="2">{{.Price}}</td></tr>{{.Content}} {{end}}
@@ -197,43 +201,43 @@ func js2Go(in []byte) (*jdPageConfig, error) {
 	}, nil
 }
 
-func getJDPrice(in *jdPageConfig) (*jdPrice, error) {
+func getJDPrice(in *jdPageConfig) (*jdPrice, []byte, error) {
 	body, err := getURL(fmt.Sprintf("https://p.3.cn/prices/mgets?skuIds=J_%d", in.SkuID))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var jdps []*jdPrice
 	if err := json.Unmarshal(body, &jdps); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return jdps[0], nil
+	return jdps[0], body, nil
 }
 
-func getJDInfo(in *jdPageConfig) (*jdInfo, error) {
+func getJDInfo(in *jdPageConfig) (*jdInfo, []byte, error) {
 	body, err := getURL(fmt.Sprintf("https://cd.jd.com/promotion/v2?skuId=%d&area=7_412_47301_0&cat=%s", in.SkuID, in.JoinCat()))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	body, err = gbk2utf8(body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	jdi := &jdInfo{}
 	if err := json.Unmarshal(body, jdi); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if jdi.Quan[0] == '[' {
 		if err := json.Unmarshal(jdi.Quan, &jdi.Quans); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	} else {
 		jdq := &jdQuan{}
 		if err := json.Unmarshal(jdi.Quan, jdq); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		jdi.Quans = append(jdi.Quans, jdq)
 	}
-	return jdi, nil
+	return jdi, body, nil
 }
 
 func serializeHTML(jdi *jdInfo, jdpc *jdPageConfig) string {
@@ -281,45 +285,52 @@ func serializeHTML(jdi *jdInfo, jdpc *jdPageConfig) string {
 	return buf.String()
 }
 
+func jdSpider(in int) error {
+	body, err := getURL(fmt.Sprintf("https://item.jd.com/%d.html", in))
+	if err != nil {
+		return err
+	}
+	pc, err := getPageConfig(body)
+	if err != nil {
+		return err
+	}
+	pc, err = gbk2utf8(pc)
+	if err != nil {
+		return err
+	}
+	jdpc, err := js2Go(pc)
+	if err != nil {
+		return err
+	}
+	jdp, pdt, err := getJDPrice(jdpc)
+	if err != nil {
+		return err
+	}
+	jdi, idt, err := getJDInfo(jdpc)
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec("INSERT INTO jd (price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?)", jdp.Price, serializeHTML(jdi, jdpc), pdt, idt, pc); err != nil {
+		return err
+	}
+	return nil
+}
+
 func procRequest(w http.ResponseWriter, r *http.Request) {
 
 }
 
 func main() {
-	body, err := getURL("https://item.jd.com/1268059.html")
-	if err != nil {
+	var err error
+
+	if db, err = sql.Open("mysql", "root@tcp(localhost:3306)/shopping?charset=utf8mb4;"); err != nil {
 		log.Fatal(err)
 	}
 
-	pc, err := getPageConfig(body)
-	if err != nil {
+	if err := jdSpider(3311987); err != nil {
 		log.Fatal(err)
 	}
-
-	pc, err = gbk2utf8(pc)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jdpc, err := js2Go(pc)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	jdp, err := getJDPrice(jdpc)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(jdp)
-
-	jdi, err := getJDInfo(jdpc)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println(jdi)
 
 	http.HandleFunc("/", procRequest)
-	log.Fatal(http.ListenAndServe(":80", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
