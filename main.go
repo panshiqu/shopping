@@ -184,7 +184,7 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 	return buf.String()
 }
 
-func jdSpider(in int) error {
+func jdSpider(in int64) error {
 	body, err := getURL(fmt.Sprintf("https://item.jd.com/%d.html", in))
 	if err != nil {
 		return err
