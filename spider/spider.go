@@ -53,7 +53,9 @@ func StartSpider() {
 
 // OnTimer 定时器到期
 func (s *Spider) OnTimer(id int, parameter interface{}) {
-
+	if err := jdSpider(int64(id)); err != nil {
+		log.Println(err)
+	}
 }
 
 func fetchURL(in string) ([]byte, error) {

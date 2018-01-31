@@ -6,6 +6,7 @@ import (
 	"text/template"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/panshiqu/shopping/spider"
 )
 
 var indexT *template.Template
@@ -24,6 +25,7 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	spider.StartSpider()
 	http.HandleFunc("/", procRequest)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
