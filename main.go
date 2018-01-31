@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,22 +12,17 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/panshiqu/shopping/db"
 	"github.com/robertkrimen/otto"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 )
 
-var db *sql.DB
-
 var indexT *template.Template
 
-const (
-	index = `<html><body><table>
+const index = `<html><body><table>
 {{range .}} <tr><td colspan="2">{{.Price}}</td></tr>{{.Content}} {{end}}
 </table></body></html>`
-
-	dataSource = "root@tcp(localhost:3306)/shopping?charset=utf8mb4"
-)
 
 type indexP struct {
 	Price   string
@@ -314,7 +308,7 @@ func jdSpider(in int) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", jdpc.SkuID, jdp.Price, serializeHTML(jdi, jdpc), pdt, idt, pc); err != nil {
+	if _, err := db.Ins.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", jdpc.SkuID, jdp.Price, serializeHTML(jdi, jdpc), pdt, idt, pc); err != nil {
 		return err
 	}
 	return nil
@@ -337,14 +331,6 @@ func init() {
 	var err error
 
 	if indexT, err = template.New("index").Parse(index); err != nil {
-		log.Fatal(err)
-	}
-
-	if db, err = sql.Open("mysql", dataSource); err != nil {
-		log.Fatal(err)
-	}
-
-	if err = db.Ping(); err != nil {
 		log.Fatal(err)
 	}
 }
