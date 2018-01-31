@@ -24,8 +24,8 @@ type Spider struct {
 
 var schedule *utils.Schedule
 
-// StartSpider 开始
-func StartSpider() {
+// Start 开始
+func Start() {
 	schedule = utils.NewSchedule(&Spider{})
 	go schedule.Start()
 

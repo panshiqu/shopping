@@ -6,6 +6,12 @@ import (
 	"fmt"
 )
 
+// IndexArgs 首页参数
+type IndexArgs struct {
+	Price   string
+	Content string
+}
+
 // JDPageConfig 页面配置
 type JDPageConfig struct {
 	SkuID       int64
