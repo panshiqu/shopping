@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/panshiqu/framework/utils"
@@ -242,15 +243,16 @@ func jdSpider(in int64) error {
 	if err != nil {
 		return err
 	}
-	content := serializeHTML(jdi, jdpc)
-	if _, err := db.Ins.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", jdpc.SkuID, jdp.Price, content, pdt, idt, pc); err != nil {
+	price, err := strconv.ParseFloat(jdp.Price, 64)
+	if err != nil {
 		return err
 	}
-	cache.Update(&define.IndexArgs{
-		SkuID:     jdpc.SkuID,
-		Price:     jdp.Price,
-		Content:   content,
-		Timestamp: time.Now().Format("01-02 15:04:05"),
-	})
+	content := serializeHTML(jdi, jdpc)
+	if err := cache.Update(jdpc.SkuID, price, content); err != nil {
+		return err
+	}
+	if _, err := db.Ins.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", jdpc.SkuID, price, content, pdt, idt, pc); err != nil {
+		return err
+	}
 	return nil
 }

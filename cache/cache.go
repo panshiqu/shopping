@@ -2,7 +2,9 @@ package cache
 
 import (
 	"sync"
+	"time"
 
+	"github.com/panshiqu/shopping/db"
 	"github.com/panshiqu/shopping/define"
 )
 
@@ -16,10 +18,43 @@ func init() {
 }
 
 // Update 更新
-func Update(in *define.IndexArgs) {
+func Update(id int64, price float64, content string) error {
 	mtx.Lock()
-	data[in.SkuID] = in
-	mtx.Unlock()
+	defer mtx.Unlock()
+
+	args, ok := data[id]
+	if !ok {
+		args = &define.IndexArgs{
+			SkuID: id,
+		}
+
+		if err := db.Ins.QueryRow("SELECT min_price,max_price FROM sku WHERE sku = ?", id).Scan(&args.MinPrice, &args.MaxPrice); err != nil {
+			return err
+		}
+
+		data[args.SkuID] = args
+	}
+
+	if price < args.MinPrice || args.MinPrice == 0 {
+		args.MinPrice = price
+
+		if _, err := db.Ins.Exec("UPDATE sku SET min_price = ? WHERE sku = ?", args.MinPrice, args.SkuID); err != nil {
+			return err
+		}
+	}
+
+	if price > args.MaxPrice || args.MaxPrice == 0 {
+		args.MaxPrice = price
+
+		if _, err := db.Ins.Exec("UPDATE sku SET max_price = ? WHERE sku = ?", args.MaxPrice, args.SkuID); err != nil {
+			return err
+		}
+	}
+
+	args.Price = price
+	args.Content = content
+	args.Timestamp = time.Now().Format("01-02 15:04:05")
+	return nil
 }
 
 // Select 查询

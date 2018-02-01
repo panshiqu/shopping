@@ -9,8 +9,10 @@ import (
 // IndexArgs 首页参数
 type IndexArgs struct {
 	SkuID     int64
-	Price     string
+	Price     float64
 	Content   string
+	MinPrice  float64
+	MaxPrice  float64
 	Timestamp string
 }
 
