@@ -20,5 +20,6 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 func main() {
 	spider.Start()
 	http.HandleFunc("/", procRequest)
+	http.HandleFunc("/favicon.ico", func(http.ResponseWriter, *http.Request) {})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
