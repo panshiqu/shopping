@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/panshiqu/framework/utils"
+	"github.com/panshiqu/shopping/cache"
 	"github.com/panshiqu/shopping/db"
 	"github.com/panshiqu/shopping/define"
 	"github.com/robertkrimen/otto"
@@ -44,6 +45,10 @@ func Start() {
 		}
 
 		schedule.Add(int(sku), time.Duration(priority)*time.Second, nil, true)
+
+		if err := jdSpider(sku); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	if err := rows.Err(); err != nil {
@@ -237,8 +242,14 @@ func jdSpider(in int64) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.Ins.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", jdpc.SkuID, jdp.Price, serializeHTML(jdi, jdpc), pdt, idt, pc); err != nil {
+	content := serializeHTML(jdi, jdpc)
+	if _, err := db.Ins.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", jdpc.SkuID, jdp.Price, content, pdt, idt, pc); err != nil {
 		return err
 	}
+	cache.Update(&define.IndexArgs{
+		SkuID:   jdpc.SkuID,
+		Price:   jdp.Price,
+		Content: content,
+	})
 	return nil
 }

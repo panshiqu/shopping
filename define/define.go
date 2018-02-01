@@ -8,6 +8,7 @@ import (
 
 // IndexArgs 首页参数
 type IndexArgs struct {
+	SkuID   int64
 	Price   string
 	Content string
 }
