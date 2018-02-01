@@ -13,7 +13,7 @@ import (
 )
 
 var index = template.Must(template.New("index").Parse(`<html><body><table>
-	{{range .}} <tr><td colspan="2">{{.Price}}</td></tr>{{.Content}} {{end}}
+	{{range .}} <tr><td colspan="2"><hr />价格：{{.Price}} 刷新时间：{{.Timestamp}}</td></tr>{{.Content}} {{end}}
 	</table></body></html>`))
 
 func procRequest(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +29,7 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var sku int64
 
-		if err := rows.Scan(sku); err != nil {
+		if err := rows.Scan(&sku); err != nil {
 			fmt.Fprint(w, err)
 			return
 		}

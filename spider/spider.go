@@ -247,9 +247,10 @@ func jdSpider(in int64) error {
 		return err
 	}
 	cache.Update(&define.IndexArgs{
-		SkuID:   jdpc.SkuID,
-		Price:   jdp.Price,
-		Content: content,
+		SkuID:     jdpc.SkuID,
+		Price:     jdp.Price,
+		Content:   content,
+		Timestamp: time.Now().Format("01-02 15:04:05"),
 	})
 	return nil
 }
