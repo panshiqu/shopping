@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"text/template"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -49,7 +50,32 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func procAdminRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, `<html><body><form><input type="number" name="sku">*商品编号（https://item.jd.com/商品编号.html）<br /><input type="number" name="priority">*优先级（作为刷新周期，越小越频繁，以秒为单位）<br /><input type="password" name="password">*请输入密码，不能谁都能添加吧<br /><br /><input type="submit" value="Submit"></form></body></html>`)
+	if r.FormValue("password") != "161015" {
+		fmt.Fprint(w, `<html><body><form><input type="number" name="sku">*商品编号（https://item.jd.com/商品编号.html）<br /><input type="number" name="priority">*优先级（作为刷新周期，越小越频繁，以秒为单位）<br /><input type="password" name="password">*请输入密码，不能谁都能添加吧<br /><br /><input type="submit" value="Submit"></form></body></html>`)
+		return
+	}
+
+	sku, err := strconv.Atoi(r.FormValue("sku"))
+	if err != nil {
+		fmt.Fprint(w, err)
+		return
+	}
+
+	priority, err := strconv.Atoi(r.FormValue("priority"))
+	if err != nil {
+		fmt.Fprint(w, err)
+		return
+	}
+
+	if _, err := db.Ins.Exec("INSERT INTO sku (sku,priority) VALUES (?,?)", sku, priority); err != nil {
+		fmt.Fprint(w, err)
+		return
+	}
+
+	if err := spider.Add(int64(sku), int64(priority)); err != nil {
+		fmt.Fprint(w, err)
+		return
+	}
 }
 
 func main() {

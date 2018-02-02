@@ -26,6 +26,15 @@ type Spider struct {
 
 var schedule *utils.Schedule
 
+// Add 增加
+func Add(sku, priority int64) error {
+	if err := jdSpider(sku); err != nil {
+		return err
+	}
+	schedule.Add(int(sku), time.Duration(priority)*time.Second, nil, true)
+	return nil
+}
+
 // Start 开始
 func Start() {
 	schedule = utils.NewSchedule(&Spider{})
@@ -45,9 +54,7 @@ func Start() {
 			log.Fatal(err)
 		}
 
-		schedule.Add(int(sku), time.Duration(priority)*time.Second, nil, true)
-
-		if err := jdSpider(sku); err != nil {
+		if err := Add(sku, priority); err != nil {
 			log.Fatal(err)
 		}
 	}
