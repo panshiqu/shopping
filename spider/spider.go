@@ -135,7 +135,7 @@ func js2Go(in []byte) (*define.JDPageConfig, error) {
 }
 
 func getJDPrice(in *define.JDPageConfig) (*define.JDPrice, []byte, error) {
-	body, err := fetchURL(fmt.Sprintf("https://p.3.cn/prices/mgets?skuIds=J_%d", in.SkuID))
+	body, err := fetchURL(fmt.Sprintf("https://p.3.cn/prices/mgets?area=7_412_47301_0&pduid=%d&skuIds=J_%d", time.Now().UnixNano(), in.SkuID))
 	if err != nil {
 		return nil, nil, err
 	}
