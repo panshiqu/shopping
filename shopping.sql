@@ -11,7 +11,7 @@
  Target Server Version : 50720
  File Encoding         : utf-8
 
- Date: 01/31/2018 17:45:31 PM
+ Date: 02/02/2018 15:31:05 PM
 */
 
 SET NAMES utf8mb4;
@@ -44,12 +44,5 @@ CREATE TABLE `sku` (
   `max_price` double NOT NULL DEFAULT '0' COMMENT '最高价',
   PRIMARY KEY (`sku`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- ----------------------------
---  Records of `sku`
--- ----------------------------
-BEGIN;
-INSERT INTO `sku` VALUES ('1268059', '10', '0', '0'), ('3311987', '60', '0', '0');
-COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;
