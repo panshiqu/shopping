@@ -248,10 +248,10 @@ func jdSpider(in int64) error {
 		return err
 	}
 	content := serializeHTML(jdi, jdpc)
-	if err := cache.Update(jdpc.SkuID, price, content); err != nil {
+	if err := cache.Update(in, price, content); err != nil {
 		return err
 	}
-	if _, err := db.Ins.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", jdpc.SkuID, price, content, pdt, idt, pc); err != nil {
+	if _, err := db.Ins.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", in, price, content, pdt, idt, pc); err != nil {
 		return err
 	}
 	return nil

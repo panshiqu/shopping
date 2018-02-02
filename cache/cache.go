@@ -28,7 +28,7 @@ func Update(id int64, price float64, content string) error {
 			SkuID: id,
 		}
 
-		if err := db.Ins.QueryRow("SELECT min_price,max_price FROM sku WHERE sku = ?", id).Scan(&args.MinPrice, &args.MaxPrice); err != nil {
+		if err := db.Ins.QueryRow("SELECT min_price,max_price FROM sku WHERE sku = ?", args.SkuID).Scan(&args.MinPrice, &args.MaxPrice); err != nil {
 			return err
 		}
 
