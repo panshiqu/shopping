@@ -48,9 +48,14 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func procAdminRequest(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, `<html><body><form><input type="number" name="sku">*商品编号（https://item.jd.com/商品编号.html）<br /><input type="number" name="priority">*优先级（作为刷新周期，越小越频繁，以秒为单位）<br /><input type="password" name="password">*请输入密码，不能谁都能添加吧<br /><br /><input type="submit" value="Submit"></form></body></html>`)
+}
+
 func main() {
-	spider.Start()
+	go spider.Start()
 	http.HandleFunc("/", procRequest)
+	http.HandleFunc("/admin", procAdminRequest)
 	http.HandleFunc("/favicon.ico", func(http.ResponseWriter, *http.Request) {})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
