@@ -10,6 +10,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/panshiqu/shopping/cache"
 	"github.com/panshiqu/shopping/db"
+	"github.com/panshiqu/shopping/define"
 	"github.com/panshiqu/shopping/spider"
 )
 
@@ -20,6 +21,7 @@ var index = template.Must(template.New("index").Parse(`<html><body><table>
 func procRequest(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Ins.Query("SELECT sku FROM sku ORDER BY priority")
 	if err != nil {
+		log.Println("procRequest Query", err)
 		fmt.Fprint(w, err)
 		return
 	}
@@ -31,6 +33,7 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 		var sku int64
 
 		if err := rows.Scan(&sku); err != nil {
+			log.Println("procRequest Scan", err)
 			fmt.Fprint(w, err)
 			return
 		}
@@ -39,11 +42,13 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := rows.Err(); err != nil {
+		log.Println("procRequest Err", err)
 		fmt.Fprint(w, err)
 		return
 	}
 
 	if err := index.Execute(w, cache.Select(ids)); err != nil {
+		log.Println("procRequest Execute", err)
 		fmt.Fprint(w, err)
 		return
 	}
@@ -57,32 +62,38 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 
 	sku, err := strconv.Atoi(r.FormValue("sku"))
 	if err != nil {
+		log.Println("procAdminRequest sku", err)
 		fmt.Fprint(w, err)
 		return
 	}
 
 	if cache.Exist(int64(sku)) {
-		fmt.Fprint(w, "Already Exist")
+		log.Println("procAdminRequest", define.ErrAlreadyExist)
+		fmt.Fprint(w, define.ErrAlreadyExist)
 		return
 	}
 
 	priority, err := strconv.Atoi(r.FormValue("priority"))
 	if err != nil {
+		log.Println("procAdminRequest priority", err)
 		fmt.Fprint(w, err)
 		return
 	}
 
 	if priority < 8*60*60 {
-		fmt.Fprint(w, "To Small Priority")
+		log.Println("procAdminRequest", define.ErrToSmallPriority)
+		fmt.Fprint(w, define.ErrToSmallPriority)
 		return
 	}
 
 	if _, err := db.Ins.Exec("INSERT INTO sku (sku,priority) VALUES (?,?)", sku, priority); err != nil {
+		log.Println("procAdminRequest Exec", err)
 		fmt.Fprint(w, err)
 		return
 	}
 
 	if err := spider.Add(int64(sku), int64(priority)); err != nil {
+		log.Println("procAdminRequest Add", err)
 		fmt.Fprint(w, err)
 		return
 	}

@@ -67,7 +67,7 @@ func Start() {
 // OnTimer 定时器到期
 func (s *Spider) OnTimer(id int, parameter interface{}) {
 	if err := jdSpider(int64(id)); err != nil {
-		log.Println(err)
+		log.Println("OnTimer", id, err)
 	}
 }
 

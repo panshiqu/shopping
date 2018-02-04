@@ -3,8 +3,15 @@ package define
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
+
+// ErrAlreadyExist .
+var ErrAlreadyExist = errors.New("Already Exist")
+
+// ErrToSmallPriority .
+var ErrToSmallPriority = errors.New("To Small Priority")
 
 // IndexArgs 首页参数
 type IndexArgs struct {
