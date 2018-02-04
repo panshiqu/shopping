@@ -51,7 +51,7 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 
 func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 	if r.FormValue("password") != "161015" {
-		fmt.Fprint(w, `<html><body><form><input type="number" name="sku">*商品编号（https://item.jd.com/商品编号.html）<br /><input type="number" name="priority">*优先级（作为刷新周期，越小越频繁，以秒为单位）<br /><input type="password" name="password">*请输入密码，不能谁都能添加吧<br /><br /><input type="submit" value="Submit"></form></body></html>`)
+		fmt.Fprint(w, `<html><body><form><input type="number" name="sku">*商品编号（https://item.jd.com/商品编号.html）<br /><input type="number" name="priority" value="28800" min="28800">*优先级（作为刷新周期，越小越频繁，以秒为单位，最低28800秒）<br /><input type="password" name="password">*请输入密码，不能谁都能添加吧<br /><br /><input type="submit" value="Submit"></form></body></html>`)
 		return
 	}
 
@@ -69,6 +69,11 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 	priority, err := strconv.Atoi(r.FormValue("priority"))
 	if err != nil {
 		fmt.Fprint(w, err)
+		return
+	}
+
+	if priority < 8*60*60 {
+		fmt.Fprint(w, "To Small Priority")
 		return
 	}
 
