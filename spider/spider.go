@@ -86,7 +86,7 @@ func getPageConfig(in []byte) ([]byte, error) {
 		return nil, errors.New("Index begin")
 	}
 	in = in[begin:]
-	end := bytes.Index(in, []byte(";"))
+	end := bytes.Index(in, []byte("};"))
 	if end == -1 {
 		return nil, errors.New("Index end")
 	}
