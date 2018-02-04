@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"database/sql"
 	"sync"
 	"time"
 
@@ -67,4 +68,17 @@ func Select(in []int64) (out []*define.IndexArgs) {
 		}
 	}
 	return
+}
+
+// Exist 存在
+func Exist(in int64) bool {
+	mtx.RLock()
+	defer mtx.RUnlock()
+	if _, ok := data[in]; ok {
+		return true
+	}
+	if err := db.Ins.QueryRow("SELECT sku FROM sku WHERE sku = ?", in).Scan(&in); err != sql.ErrNoRows {
+		return true
+	}
+	return false
 }

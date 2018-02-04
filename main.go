@@ -61,6 +61,11 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if cache.Exist(int64(sku)) {
+		fmt.Fprint(w, "Already Exist")
+		return
+	}
+
 	priority, err := strconv.Atoi(r.FormValue("priority"))
 	if err != nil {
 		fmt.Fprint(w, err)
@@ -76,6 +81,8 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, err)
 		return
 	}
+
+	http.Redirect(w, r, "", http.StatusFound)
 }
 
 func main() {
