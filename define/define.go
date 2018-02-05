@@ -118,6 +118,19 @@ type JDTag struct {
 	AdURL   string `json:"adurl,omitempty"`
 	Name    string `json:"name"`
 	Pid     string `json:"pid"`
+
+	Gifts []*JDGift `json:"gifts"`
+}
+
+// JDGift .
+type JDGift struct {
+	Gs  int64  `json:"gs"`
+	Nm  string `json:"nm"`
+	Sid string `json:"sid"`
+	Ss  int64  `json:"ss"`
+	Gt  int64  `json:"gt"`
+	Mp  string `json:"mp"`
+	Num int64  `json:"num"`
 }
 
 // JoinCat .

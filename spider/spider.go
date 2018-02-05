@@ -212,7 +212,11 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 		fmt.Fprintf(&buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
 	}
 	for _, v := range jdi.Prom.Tags {
-		if v.AdURL != "" {
+		if len(v.Gifts) != 0 {
+			for _, vv := range v.Gifts {
+				fmt.Fprintf(&buf, "【%s】<a href='https://item.jd.com/%s.html' target='_blank'>%s</a>X%d%s<br />", v.Name, vv.Sid, vv.Nm, vv.Num, v.Content)
+			}
+		} else if v.AdURL != "" {
 			fmt.Fprintf(&buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
 		} else {
 			fmt.Fprintf(&buf, "【%s】%s<br />", v.Name, v.Content)
