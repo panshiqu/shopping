@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/panshiqu/framework/utils"
@@ -90,7 +91,7 @@ func getPageConfig(in []byte) ([]byte, error) {
 	if end == -1 {
 		return nil, errors.New("Index end")
 	}
-	return in[:end+1], nil
+	return in[:end+2], nil
 }
 
 func gbk2utf8(in []byte) ([]byte, error) {
@@ -180,6 +181,29 @@ func getJDInfo(in *define.JDPageConfig) (*define.JDInfo, []byte, error) {
 	return jdi, body, nil
 }
 
+func getJDTax(in int64) (float64, error) {
+	body, err := fetchURL(fmt.Sprintf("https://c.3.cn/globalBuy?skuId=%d", in))
+	if err != nil {
+		return 0, err
+	}
+	body, err = gbk2utf8(body)
+	if err != nil {
+		return 0, err
+	}
+	jdgb := &define.JDGlobalBuy{}
+	if err := json.Unmarshal(body, jdgb); err != nil {
+		return 0, err
+	}
+	if !jdgb.Success {
+		return 0, nil
+	}
+	pos := strings.Index(jdgb.TaxTxt.Content, "￥")
+	if pos == -1 {
+		return 0, errors.New("Index pos")
+	}
+	return strconv.ParseFloat(jdgb.TaxTxt.Content[pos+3:], 64)
+}
+
 func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "<tr><td><a href='https://item.jd.com/%d.html' target='_blank'><img src='%s' /></a></td><td>", jdpc.SkuID, jdpc.Src)
@@ -254,10 +278,15 @@ func jdSpider(in int64) error {
 	if err != nil {
 		return err
 	}
+	tax, err := getJDTax(in)
+	if err != nil {
+		return err
+	}
 	price, err := strconv.ParseFloat(jdp.Price, 64)
 	if err != nil {
 		return err
 	}
+	price += tax
 	content := serializeHTML(jdi, jdpc)
 	if err := cache.Update(in, price, content); err != nil {
 		return err

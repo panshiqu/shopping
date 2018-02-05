@@ -133,6 +133,17 @@ type JDGift struct {
 	Num int64  `json:"num"`
 }
 
+// JDGlobalBuy .
+type JDGlobalBuy struct {
+	Success bool      `json:"success"`
+	TaxTxt  *JDTaxTxt `json:"taxTxt"`
+}
+
+// JDTaxTxt .
+type JDTaxTxt struct {
+	Content string `json:"content"`
+}
+
 // JoinCat .
 func (j *JDPageConfig) JoinCat() []byte {
 	if len(j.Cat) == 0 {
