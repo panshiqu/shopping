@@ -232,25 +232,27 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 	for _, v := range jdi.Quans {
 		fmt.Fprintf(&buf, "<a href='%s' target='_blank'>%s</a><br />", v.ActURL, v.Title)
 	}
-	for _, v := range jdi.Prom.PickOneTag {
-		fmt.Fprintf(&buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
-	}
-	for _, v := range jdi.Prom.Tags {
-		if len(v.Gifts) != 0 {
-			for _, vv := range v.Gifts {
-				fmt.Fprintf(&buf, "【%s】<a href='https://item.jd.com/%s.html' target='_blank'>%s</a>X%d%s<br />", v.Name, vv.Sid, vv.Nm, vv.Num, v.Content)
-			}
-		} else if v.AdURL != "" {
-			fmt.Fprintf(&buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
-		} else {
-			fmt.Fprintf(&buf, "【%s】%s<br />", v.Name, v.Content)
-		}
-	}
+	serializeTag(&buf, jdi.Prom.PickOneTag)
+	serializeTag(&buf, jdi.Prom.Tags)
 	if bytes.HasSuffix(buf.Bytes(), []byte("<br />")) {
 		buf.Truncate(buf.Len() - 6)
 	}
 	fmt.Fprintf(&buf, "</td></tr>")
 	return buf.String()
+}
+
+func serializeTag(buf *bytes.Buffer, tags []*define.JDTag) {
+	for _, v := range tags {
+		if len(v.Gifts) != 0 {
+			for _, vv := range v.Gifts {
+				fmt.Fprintf(buf, "【%s】<a href='https://item.jd.com/%s.html' target='_blank'>%s</a>X%d%s<br />", v.Name, vv.Sid, vv.Nm, vv.Num, v.Content)
+			}
+		} else if v.AdURL != "" {
+			fmt.Fprintf(buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
+		} else {
+			fmt.Fprintf(buf, "【%s】%s<br />", v.Name, v.Content)
+		}
+	}
 }
 
 func jdSpider(in int64) error {
