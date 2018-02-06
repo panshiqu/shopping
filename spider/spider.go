@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -288,7 +289,7 @@ func jdSpider(in int64) error {
 	if err != nil {
 		return err
 	}
-	price += tax
+	price = math.Trunc((price+tax)*100+0.5) / 100
 	content := serializeHTML(jdi, jdpc)
 	if err := cache.Update(in, price, content); err != nil {
 		return err
