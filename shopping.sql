@@ -3,15 +3,15 @@
 
  Source Server         : localhost
  Source Server Type    : MySQL
- Source Server Version : 50720
+ Source Server Version : 50718
  Source Host           : localhost
  Source Database       : shopping
 
  Target Server Type    : MySQL
- Target Server Version : 50720
+ Target Server Version : 50718
  File Encoding         : utf-8
 
- Date: 02/02/2018 15:31:05 PM
+ Date: 02/07/2018 22:56:29 PM
 */
 
 SET NAMES utf8mb4;
@@ -42,6 +42,7 @@ CREATE TABLE `sku` (
   `priority` int(10) unsigned NOT NULL COMMENT '优先级',
   `min_price` double NOT NULL DEFAULT '0' COMMENT '最低价',
   `max_price` double NOT NULL DEFAULT '0' COMMENT '最高价',
+  `insert_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '插入时间',
   PRIMARY KEY (`sku`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
