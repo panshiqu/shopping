@@ -15,7 +15,7 @@ import (
 )
 
 var index = template.Must(template.New("index").Parse(`<html><body><table>
-	{{range .}} <tr><td colspan="2"><hr />编号：{{.SkuID}} 价格：{{.Price}} 刷新时间：{{.Timestamp}} 最低价：{{.MinPrice}} 最高价：{{.MaxPrice}} 已持续：{{.Duration}}</td></tr>{{.Content}} {{end}}
+	{{range .}} <tr><td colspan="2"><hr />编号：{{.SkuID}} 价格：{{.Price}} 刷新时间：{{.Timestamp}} 最低价：{{.MinPrice}} 最高价：{{.MaxPrice}} 已持续：{{.Duration}} 采样{{.Sampling}}次</td></tr>{{.Content}} {{end}}
 	</table></body></html>`))
 
 func procRequest(w http.ResponseWriter, r *http.Request) {

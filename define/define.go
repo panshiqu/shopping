@@ -22,6 +22,7 @@ type IndexArgs struct {
 	MaxPrice  float64
 	Timestamp string
 	Duration  string
+	Sampling  int64
 
 	InsertTimestamp int64
 }

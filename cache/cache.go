@@ -33,6 +33,10 @@ func Update(id int64, price float64, content string) error {
 			return err
 		}
 
+		if err := db.Ins.QueryRow("SELECT COUNT(*) FROM jd WHERE sku = ?", args.SkuID).Scan(&args.Sampling); err != nil {
+			return err
+		}
+
 		data[args.SkuID] = args
 	}
 
@@ -55,6 +59,7 @@ func Update(id int64, price float64, content string) error {
 	args.Price = price
 	args.Content = content
 	args.Timestamp = time.Now().Format("01-02 15:04:05")
+	args.Sampling++
 	return nil
 }
 
