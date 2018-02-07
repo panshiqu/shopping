@@ -29,7 +29,7 @@ func Update(id int64, price float64, content string) error {
 			SkuID: id,
 		}
 
-		if err := db.Ins.QueryRow("SELECT min_price,max_price FROM sku WHERE sku = ?", args.SkuID).Scan(&args.MinPrice, &args.MaxPrice); err != nil {
+		if err := db.Ins.QueryRow("SELECT min_price,max_price,UNIX_TIMESTAMP(insert_timestamp) FROM sku WHERE sku = ?", args.SkuID).Scan(&args.MinPrice, &args.MaxPrice, &args.InsertTimestamp); err != nil {
 			return err
 		}
 
@@ -62,8 +62,10 @@ func Update(id int64, price float64, content string) error {
 func Select(in []int64) (out []*define.IndexArgs) {
 	mtx.RLock()
 	defer mtx.RUnlock()
+	now := time.Now().Unix()
 	for _, v := range in {
 		if va, ok := data[v]; ok {
+			va.Duration = (time.Duration(now-va.InsertTimestamp) * time.Second).String()
 			out = append(out, va)
 		}
 	}

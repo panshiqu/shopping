@@ -21,6 +21,9 @@ type IndexArgs struct {
 	MinPrice  float64
 	MaxPrice  float64
 	Timestamp string
+	Duration  string
+
+	InsertTimestamp int64
 }
 
 // JDPageConfig 页面配置

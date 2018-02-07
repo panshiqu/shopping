@@ -231,7 +231,7 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 		}
 	}
 	for _, v := range jdi.Quans {
-		fmt.Fprintf(&buf, "<a href='%s' target='_blank'>%s</a><br />", v.ActURL, v.Title)
+		fmt.Fprintf(&buf, "【满额返券】<a href='%s' target='_blank'>%s</a><br />", v.ActURL, v.Title)
 	}
 	serializeTag(&buf, jdi.Prom.PickOneTag)
 	serializeTag(&buf, jdi.Prom.Tags)
