@@ -40,6 +40,12 @@ func Update(id int64, price float64, content string) error {
 		data[args.SkuID] = args
 	}
 
+	args.Timestamp = time.Now().Format("01-02 15:04:05")
+
+	if price == args.Price && content == args.Content {
+		return define.ErrDataSame
+	}
+
 	if price < args.MinPrice || args.MinPrice == 0 {
 		args.MinPrice = price
 
@@ -58,7 +64,6 @@ func Update(id int64, price float64, content string) error {
 
 	args.Price = price
 	args.Content = content
-	args.Timestamp = time.Now().Format("01-02 15:04:05")
 	args.Sampling++
 	return nil
 }

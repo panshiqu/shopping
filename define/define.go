@@ -7,6 +7,9 @@ import (
 	"fmt"
 )
 
+// ErrDataSame .
+var ErrDataSame = errors.New("Data Same")
+
 // ErrAlreadyExist .
 var ErrAlreadyExist = errors.New("Already Exist")
 

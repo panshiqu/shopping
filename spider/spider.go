@@ -291,7 +291,11 @@ func jdSpider(in int64) error {
 	}
 	price = math.Trunc((price+tax)*100+0.5) / 100
 	content := serializeHTML(jdi, jdpc)
-	if err := cache.Update(in, price, content); err != nil {
+	err = cache.Update(in, price, content)
+	if err == define.ErrDataSame {
+		return nil
+	}
+	if err != nil {
 		return err
 	}
 	if _, err := db.Ins.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", in, price, content, pdt, idt, pc); err != nil {
