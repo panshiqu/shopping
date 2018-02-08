@@ -27,6 +27,11 @@ type IndexArgs struct {
 	InsertTimestamp int64
 }
 
+// IsMinPrice .
+func (i *IndexArgs) IsMinPrice() bool {
+	return i.MinPrice != i.MaxPrice && i.MinPrice == i.Price
+}
+
 // JDPageConfig 页面配置
 type JDPageConfig struct {
 	SkuID       int64

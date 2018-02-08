@@ -209,10 +209,10 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "<tr><td><a href='https://item.jd.com/%d.html' target='_blank'><img src='%s' /></a></td><td>", jdpc.SkuID, jdpc.Src)
 	if jdpc.KoBeginTime != 0 {
-		fmt.Fprintf(&buf, "【京东秒杀%s开始】", time.Unix(jdpc.KoBeginTime/1000, 0).Format("01-02 15:04"))
+		fmt.Fprintf(&buf, "<font color='red'>【京东秒杀%s开始】</font>", time.Unix(jdpc.KoBeginTime/1000, 0).Format("01-02 15:04"))
 	}
 	if jdpc.KoEndTime != 0 {
-		fmt.Fprintf(&buf, "【京东秒杀%s结束】", time.Unix(jdpc.KoEndTime/1000, 0).Format("01-02 15:04"))
+		fmt.Fprintf(&buf, "<font color='red'>【京东秒杀%s结束】</font>", time.Unix(jdpc.KoEndTime/1000, 0).Format("01-02 15:04"))
 	}
 	fmt.Fprintf(&buf, "<a href='https://item.jd.com/%d.html' target='_blank'>%s</a><br />", jdpc.SkuID, jdpc.Name)
 	for _, v := range jdi.SkuCoupon {
