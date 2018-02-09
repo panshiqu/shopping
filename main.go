@@ -103,6 +103,7 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	go spider.Start()
+	log.Println("Start...")
 	http.HandleFunc("/", procRequest)
 	http.HandleFunc("/admin", procAdminRequest)
 	http.HandleFunc("/favicon.ico", func(http.ResponseWriter, *http.Request) {})
