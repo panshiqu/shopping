@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -233,8 +234,9 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 	for _, v := range jdi.Quans {
 		fmt.Fprintf(&buf, "【满额返券】<a href='%s' target='_blank'>%s</a><br />", v.ActURL, v.Title)
 	}
-	serializeTag(&buf, jdi.Prom.PickOneTag)
-	serializeTag(&buf, jdi.Prom.Tags)
+	tags := append(jdi.Prom.PickOneTag, jdi.Prom.Tags...)
+	sort.Sort(define.TagsSlice(tags))
+	serializeTag(&buf, tags)
 	if bytes.HasSuffix(buf.Bytes(), []byte("<br />")) {
 		buf.Truncate(buf.Len() - 6)
 	}

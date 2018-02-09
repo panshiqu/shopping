@@ -167,3 +167,21 @@ func (j *JDPageConfig) JoinCat() []byte {
 	}
 	return buf.Bytes()[:buf.Len()-1]
 }
+
+// TagsSlice .
+type TagsSlice []*JDTag
+
+func (t TagsSlice) Len() int {
+	return len(t)
+}
+
+func (t TagsSlice) Less(i, j int) bool {
+	if t[i].Code != t[j].Code {
+		return t[i].Code < t[j].Code
+	}
+	return t[i].Pid < t[j].Pid
+}
+
+func (t TagsSlice) Swap(i, j int) {
+	t[i], t[j] = t[j], t[i]
+}
