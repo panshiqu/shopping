@@ -60,6 +60,8 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println("procAdminRequest", r.FormValue("sku"), r.FormValue("priority"))
+
 	sku, err := strconv.Atoi(r.FormValue("sku"))
 	if err != nil {
 		log.Println("procAdminRequest sku", err)
@@ -102,8 +104,10 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	go spider.Start()
+	log.SetFlags(log.Flags() | log.Lshortfile)
 	log.Println("Start...")
+
+	go spider.Start()
 	http.HandleFunc("/", procRequest)
 	http.HandleFunc("/admin", procAdminRequest)
 	http.HandleFunc("/favicon.ico", func(http.ResponseWriter, *http.Request) {})
