@@ -29,6 +29,10 @@ func Update(id int64, price float64, content string) error {
 			SkuID: id,
 		}
 
+		if err := db.Ins.QueryRow("SELECT price,content FROM jd WHERE sku = ? ORDER BY id DESC LIMIT 1", args.SkuID).Scan(&args.Price, &args.Content); err != nil {
+			return err
+		}
+
 		if err := db.Ins.QueryRow("SELECT min_price,max_price,UNIX_TIMESTAMP(insert_timestamp) FROM sku WHERE sku = ?", args.SkuID).Scan(&args.MinPrice, &args.MaxPrice, &args.InsertTimestamp); err != nil {
 			return err
 		}
