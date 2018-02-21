@@ -19,7 +19,7 @@ func init() {
 }
 
 // Update 更新
-func Update(id int64, price float64, content string) error {
+func Update(id int64, price float64, content string) (bool, error) {
 	mtx.Lock()
 	defer mtx.Unlock()
 
@@ -30,15 +30,15 @@ func Update(id int64, price float64, content string) error {
 		}
 
 		if err := db.Ins.QueryRow("SELECT price,content FROM jd WHERE sku = ? ORDER BY id DESC LIMIT 1", args.SkuID).Scan(&args.Price, &args.Content); err != nil && err != sql.ErrNoRows {
-			return err
+			return false, err
 		}
 
 		if err := db.Ins.QueryRow("SELECT min_price,max_price,UNIX_TIMESTAMP(insert_timestamp) FROM sku WHERE sku = ?", args.SkuID).Scan(&args.MinPrice, &args.MaxPrice, &args.InsertTimestamp); err != nil {
-			return err
+			return false, err
 		}
 
 		if err := db.Ins.QueryRow("SELECT COUNT(*) FROM jd WHERE sku = ?", args.SkuID).Scan(&args.Sampling); err != nil {
-			return err
+			return false, err
 		}
 
 		data[args.SkuID] = args
@@ -47,14 +47,14 @@ func Update(id int64, price float64, content string) error {
 	args.Timestamp = time.Now().Format("01-02 15:04:05")
 
 	if price == args.Price && content == args.Content {
-		return define.ErrDataSame
+		return false, define.ErrDataSame
 	}
 
 	if price < args.MinPrice || args.MinPrice == 0 {
 		args.MinPrice = price
 
 		if _, err := db.Ins.Exec("UPDATE sku SET min_price = ? WHERE sku = ?", args.MinPrice, args.SkuID); err != nil {
-			return err
+			return false, err
 		}
 	}
 
@@ -62,14 +62,14 @@ func Update(id int64, price float64, content string) error {
 		args.MaxPrice = price
 
 		if _, err := db.Ins.Exec("UPDATE sku SET max_price = ? WHERE sku = ?", args.MaxPrice, args.SkuID); err != nil {
-			return err
+			return false, err
 		}
 	}
 
 	args.Price = price
 	args.Content = content
 	args.Sampling++
-	return nil
+	return args.IsMinPrice(), nil
 }
 
 // Select 查询

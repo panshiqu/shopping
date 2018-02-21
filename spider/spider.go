@@ -9,6 +9,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -293,7 +294,7 @@ func jdSpider(in int64) error {
 	}
 	price = math.Trunc((price+tax)*100+0.5) / 100
 	content := serializeHTML(jdi, jdpc)
-	err = cache.Update(in, price, content)
+	push, err := cache.Update(in, price, content)
 	if err == define.ErrDataSame {
 		return nil
 	}
@@ -303,5 +304,15 @@ func jdSpider(in int64) error {
 	if _, err := db.Ins.Exec("INSERT INTO jd (sku,price,content,jd_price,jd_promotion,jd_page_config) VALUES (?,?,?,?,?,?)", in, price, content, pdt, idt, pc); err != nil {
 		return err
 	}
+	if !push {
+		return nil
+	}
+	str := url.QueryEscape(fmt.Sprintf("%s降价至%.2f https://item.jd.com/%d.html", jdpc.Name, price, in))
+	str = fmt.Sprintf(`http://localhost/push?id=o0qWoxE_BrLlGqXE2wJU7SZ01lh0&message=%s`, str)
+	resp, err := http.Get(str)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
 	return nil
 }
