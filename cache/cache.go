@@ -29,7 +29,7 @@ func Update(id int64, price float64, content string) error {
 			SkuID: id,
 		}
 
-		if err := db.Ins.QueryRow("SELECT price,content FROM jd WHERE sku = ? ORDER BY id DESC LIMIT 1", args.SkuID).Scan(&args.Price, &args.Content); err != nil {
+		if err := db.Ins.QueryRow("SELECT price,content FROM jd WHERE sku = ? ORDER BY id DESC LIMIT 1", args.SkuID).Scan(&args.Price, &args.Content); err != nil && err != sql.ErrNoRows {
 			return err
 		}
 
