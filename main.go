@@ -102,6 +102,14 @@ func procBindRequest(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	if _, err := db.Ins.Exec("INSERT INTO user (id,alias,password) VALUES (?,?,?) ON DUPLICATE KEY UPDATE alias = ?,password = ?", id, alias, password, alias, password); err != nil {
+		log.Println("procBindRequest Exec", err)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	fmt.Fprintf(w, "<html><body>绑定成功，请自主<a href='/subscribe' target='_blank'>订阅商品</a>，然后访问您的<a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", alias)
 }
 
 func procAdminRequest(w http.ResponseWriter, r *http.Request) {
