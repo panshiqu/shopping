@@ -82,20 +82,23 @@ func procBindRequest(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 
 	if l := len(alias); l == 0 || l > 128 || len(password) != 6 {
-		fmt.Fprint(w, "illegal len")
+		log.Println("procBindRequest", define.ErrIllegalLen)
+		fmt.Fprint(w, define.ErrIllegalLen)
 		return
 	}
 
 	for _, v := range alias {
 		if v < 'a' || v > 'z' {
-			fmt.Fprint(w, "illegal alias")
+			log.Println("procBindRequest", define.ErrIllegalAlias)
+			fmt.Fprint(w, define.ErrIllegalAlias)
 			return
 		}
 	}
 
 	for _, v := range password {
 		if v < '0' || v > '9' {
-			fmt.Fprint(w, "illegal password")
+			log.Println("procBindRequest", define.ErrIllegalPassword)
+			fmt.Fprint(w, define.ErrIllegalPassword)
 			return
 		}
 	}
@@ -170,6 +173,7 @@ func procCaptchaRequest(w http.ResponseWriter, r *http.Request) {
 	resp, err := http.Get(fmt.Sprintf(`http://localhost/push?id=%s&message=验证码：%d`, r.FormValue("id"), captcha[r.FormValue("id")]))
 	if err != nil {
 		log.Println("procCaptchaRequest Get", err)
+		fmt.Fprint(w, err)
 		return
 	}
 

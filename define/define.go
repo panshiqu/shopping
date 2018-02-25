@@ -16,6 +16,15 @@ var ErrAlreadyExist = errors.New("Already Exist")
 // ErrToSmallPriority .
 var ErrToSmallPriority = errors.New("To Small Priority")
 
+// ErrIllegalLen .
+var ErrIllegalLen = errors.New("illegal len")
+
+// ErrIllegalAlias .
+var ErrIllegalAlias = errors.New("illegal alias")
+
+// ErrIllegalPassword .
+var ErrIllegalPassword = errors.New("illegal password")
+
 // IndexArgs 首页参数
 type IndexArgs struct {
 	SkuID     int64
