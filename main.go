@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"text/template"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -58,19 +59,46 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func procBindRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, `
-		<html>
-		<body>
-		<form>
-		<input type="text" name="id">*休闲益智游戏公众号发送 id 获得<br />
-		<input type="text" name="alias">*请设置别名，暂仅支持纯字母组合，不区分大小写<br />
-		<input type="text" name="password">*请设置密码，暂仅支持6位纯数字组合<br />
-		<input type="number" name="captcha"> <a href="/captcha" target="_blank">获取</a><br /><br />
-		<input type="submit" value="绑定">
-		</form>
-		</body>
-		</html>
-		`)
+	id := r.FormValue("id")
+
+	if id == "" || captcha[id] == 0 || fmt.Sprintf("%d", captcha[id]) != r.FormValue("captcha") {
+		fmt.Fprint(w, `
+			<html>
+			<body>
+			<form>
+			<input type="text" name="id">*休闲益智游戏公众号发送 id 获得<br />
+			<input type="text" name="alias">*请设置别名，暂仅支持纯字母组合，不区分大小写<br />
+			<input type="text" name="password">*请设置密码，暂仅支持6位纯数字组合<br />
+			<input type="number" name="captcha"> <a href="/captcha" target="_blank">获取</a><br /><br />
+			<input type="submit" value="绑定">
+			</form>
+			</body>
+			</html>
+			`)
+		return
+	}
+
+	alias := strings.ToLower(r.FormValue("alias"))
+	password := r.FormValue("password")
+
+	if l := len(alias); l == 0 || l > 128 || len(password) != 6 {
+		fmt.Fprint(w, "illegal len")
+		return
+	}
+
+	for _, v := range alias {
+		if v < 'a' || v > 'z' {
+			fmt.Fprint(w, "illegal alias")
+			return
+		}
+	}
+
+	for _, v := range password {
+		if v < '0' || v > '9' {
+			fmt.Fprint(w, "illegal password")
+			return
+		}
+	}
 }
 
 func procAdminRequest(w http.ResponseWriter, r *http.Request) {
