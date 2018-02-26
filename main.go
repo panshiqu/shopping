@@ -27,7 +27,24 @@ var index = template.Must(template.New("index").Parse(`<html><body><ul><li>Âè™Êò
 	</table></body></html>`))
 
 func procRequest(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Ins.Query("SELECT sku FROM sku ORDER BY priority")
+	var err error
+	var rows *sql.Rows
+	alias := r.FormValue("alias")
+
+	if alias == "" {
+		rows, err = db.Ins.Query("SELECT sku FROM sku ORDER BY priority")
+	} else {
+		var id string
+
+		if err := db.Ins.QueryRow("SELECT id FROM user WHERE alias = ?", alias).Scan(&id); err != nil {
+			log.Println("procRequest QueryRow", err)
+			fmt.Fprint(w, err)
+			return
+		}
+
+		rows, err = db.Ins.Query("SELECT sku FROM subscribe WHERE id = ? ORDER BY keywords", id)
+	}
+
 	if err != nil {
 		log.Println("procRequest Query", err)
 		fmt.Fprint(w, err)
