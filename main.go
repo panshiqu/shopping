@@ -190,6 +190,54 @@ func procCaptchaRequest(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "已发送，请打开休闲益智游戏公众号查看\n若未收到，可能因为您好久未与公众号交互，请在公众号内发送任意内容之后再次获取验证码")
 }
 
+func procSubscribeRequest(w http.ResponseWriter, r *http.Request) {
+	if r.FormValue("sku") == "" || r.FormValue("alias") == "" {
+		fmt.Fprint(w, `
+			<html>
+			<body>
+			<form>
+			<input type="number" name="sku">*请订阅添加过的商品编号，<a href='/admin' target='_blank'>添加商品</a><br />
+			<input type="text" name="alias">*绑定时输入的别名<br />
+			<input type="text" name="password">*绑定时输入的密码<br />
+			<input type="text" name="keywords">*关键字用于排序<br /><br />
+			<input type="submit" value="订阅">
+			</form>
+			</body>
+			</html>
+			`)
+		return
+	}
+
+	var id string
+
+	if err := db.Ins.QueryRow("SELECT id FROM user WHERE alias = ? AND password = ?", r.FormValue("alias"), r.FormValue("password")).Scan(&id); err != nil {
+		log.Println("procSubscribeRequest QueryRow", err)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	sku, err := strconv.Atoi(r.FormValue("sku"))
+	if err != nil {
+		log.Println("procSubscribeRequest", err)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	if !cache.Exist(int64(sku)) {
+		log.Println("procSubscribeRequest", define.ErrNotExist)
+		fmt.Fprint(w, define.ErrNotExist)
+		return
+	}
+
+	if _, err := db.Ins.Exec("INSERT INTO subscribe (id,sku,keywords) VALUES (?,?,?) ON DUPLICATE KEY UPDATE keywords = ?", id, sku, r.FormValue("keywords"), r.FormValue("keywords")); err != nil {
+		log.Println("procSubscribeRequest Exec", err)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	fmt.Fprintf(w, "<html><body>订阅成功，<a href='/subscribe' target='_blank'>继续订阅</a> or <a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", r.FormValue("alias"))
+}
+
 func main() {
 	captcha = make(map[string]int32)
 
@@ -201,6 +249,7 @@ func main() {
 	http.HandleFunc("/bind", procBindRequest)
 	http.HandleFunc("/admin", procAdminRequest)
 	http.HandleFunc("/captcha", procCaptchaRequest)
+	http.HandleFunc("/subscribe", procSubscribeRequest)
 	http.HandleFunc("/favicon.ico", func(http.ResponseWriter, *http.Request) {})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -10,6 +10,9 @@ import (
 // ErrDataSame .
 var ErrDataSame = errors.New("Data Same")
 
+// ErrNotExist .
+var ErrNotExist = errors.New("Not Exist")
+
 // ErrAlreadyExist .
 var ErrAlreadyExist = errors.New("Already Exist")
 
