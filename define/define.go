@@ -28,6 +28,12 @@ var ErrIllegalAlias = errors.New("illegal alias")
 // ErrIllegalPassword .
 var ErrIllegalPassword = errors.New("illegal password")
 
+// IndexData 首页数据
+type IndexData struct {
+	Args  []*IndexArgs
+	Alias string
+}
+
 // IndexArgs 首页参数
 type IndexArgs struct {
 	SkuID     int64

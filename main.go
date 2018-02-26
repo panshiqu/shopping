@@ -23,7 +23,7 @@ var aliasMutex sync.Mutex
 var captcha map[string]int32
 
 var index = template.Must(template.New("index").Parse(`<html><body><ul><li>只是来玩游戏的请点击 <a href='http://13.250.117.241:8081' target='_blank'>这里</a></li><li>请搜索 <font color="red">Min</font> 快速浏览当前价格为最低价的商品</li><li>请搜索 <font color="red">京东秒杀</font> 快速浏览正在参与或即将参与秒杀的商品</li></ul><table>
-	{{range .}} <tr><td colspan="2"><hr />{{if .IsMinPrice}}<font color="red" size="4">Min</font> {{end}}编号：{{.SkuID}} 价格：<font color="red" size="4">{{.Price}}</font> 刷新时间：{{.Timestamp}} 最低价：{{.MinPrice}} 最高价：{{.MaxPrice}} 已持续：{{.Duration}} 有效采样{{.Sampling}}次</td></tr>{{.Content}} {{end}}
+	{{range .Args}} <tr><td colspan="2"><hr />{{if .IsMinPrice}}<font color="red" size="4">Min</font> {{end}}编号：{{.SkuID}} 价格：<font color="red" size="4">{{.Price}}</font> 刷新时间：{{.Timestamp}} 最低价：{{.MinPrice}} 最高价：{{.MaxPrice}} 已持续：{{.Duration}} 有效采样{{.Sampling}}次 {{if eq $.Alias ""}}<a href='{{printf "/subscribe?sku=%d" .SkuID}}' target='_blank'>订阅</a>{{else}}删除{{end}}</td></tr>{{.Content}} {{end}}
 	</table></body></html>`))
 
 func procRequest(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +72,12 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := index.Execute(w, cache.Select(ids)); err != nil {
+	data := &define.IndexData{
+		Args:  cache.Select(ids),
+		Alias: alias,
+	}
+
+	if err := index.Execute(w, data); err != nil {
 		log.Println("procRequest Execute", err)
 		fmt.Fprint(w, err)
 		return
@@ -236,11 +241,11 @@ func procCaptchaRequest(w http.ResponseWriter, r *http.Request) {
 
 func procSubscribeRequest(w http.ResponseWriter, r *http.Request) {
 	if r.FormValue("sku") == "" || r.FormValue("alias") == "" {
-		fmt.Fprint(w, `
+		fmt.Fprintf(w, `
 			<html>
 			<body>
 			<form>
-			<input type="number" name="sku">*请订阅添加过的商品编号，<a href='/admin' target='_blank'>添加商品</a><br />
+			<input type="number" name="sku" value="%s">*请订阅添加过的商品编号，<a href='/admin' target='_blank'>添加商品</a><br />
 			<input type="text" name="alias">*绑定时输入的别名<br />
 			<input type="text" name="password">*绑定时输入的密码<br />
 			<input type="text" name="keywords">*关键字用于排序<br /><br />
@@ -248,7 +253,7 @@ func procSubscribeRequest(w http.ResponseWriter, r *http.Request) {
 			</form>
 			</body>
 			</html>
-			`)
+			`, r.FormValue("sku"))
 		return
 	}
 
