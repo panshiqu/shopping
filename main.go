@@ -1,12 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"text/template"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -15,6 +17,8 @@ import (
 	"github.com/panshiqu/shopping/define"
 	"github.com/panshiqu/shopping/spider"
 )
+
+var aliasMutex sync.Mutex
 
 var captcha map[string]int32
 
@@ -101,6 +105,18 @@ func procBindRequest(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, define.ErrIllegalPassword)
 			return
 		}
+	}
+
+	aliasMutex.Lock()
+	defer aliasMutex.Unlock()
+
+	if err := db.Ins.QueryRow("SELECT alias FROM user WHERE alias = ? AND id <> ?", alias, id).Scan(&alias); err != sql.ErrNoRows {
+		if err == nil {
+			err = define.ErrAlreadyExist
+		}
+		log.Println("procBindRequest QueryRow", err)
+		fmt.Fprint(w, err)
+		return
 	}
 
 	if _, err := db.Ins.Exec("INSERT INTO user (id,alias,password) VALUES (?,?,?) ON DUPLICATE KEY UPDATE alias = ?,password = ?", id, alias, password, alias, password); err != nil {
