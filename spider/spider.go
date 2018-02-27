@@ -307,12 +307,24 @@ func jdSpider(in int64) error {
 	if !push {
 		return nil
 	}
-	str := url.QueryEscape(fmt.Sprintf("%s降价至%.2f https://item.jd.com/%d.html", jdpc.Name, price, in))
-	str = fmt.Sprintf(`http://localhost/push?id=o0qWoxE_BrLlGqXE2wJU7SZ01lh0&message=%s`, str)
-	resp, err := http.Get(str)
+	msg := url.QueryEscape(fmt.Sprintf("%s降价至%.2f https://item.jd.com/%d.html", jdpc.Name, price, in))
+	rows, err := db.Ins.Query("SELECT id FROM subscribe WHERE sku = ?", in)
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
-	return nil
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			log.Println("jdSpider Scan", err)
+			continue
+		}
+		resp, err := http.Get(fmt.Sprintf(`http://localhost/push?id=%s&message=%s`, id, msg))
+		if err != nil {
+			log.Println("jdSpider Get", err)
+			continue
+		}
+		resp.Body.Close()
+	}
+	return rows.Err()
 }
