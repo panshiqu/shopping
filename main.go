@@ -107,6 +107,8 @@ func procBindRequest(w http.ResponseWriter, r *http.Request) {
 	alias := strings.ToLower(r.FormValue("alias"))
 	password := r.FormValue("password")
 
+	log.Println("procBindRequest", id, alias, password)
+
 	if l := len(alias); l == 0 || l > 128 || len(password) != 6 {
 		log.Println("procBindRequest", define.ErrIllegalLen)
 		fmt.Fprint(w, define.ErrIllegalLen)
@@ -167,9 +169,12 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("procAdminRequest", r.FormValue("sku"), r.FormValue("priority"))
+	skuStr := r.FormValue("sku")
+	priorityStr := r.FormValue("priority")
 
-	sku, err := strconv.Atoi(r.FormValue("sku"))
+	log.Println("procAdminRequest", skuStr, priorityStr)
+
+	sku, err := strconv.Atoi(skuStr)
 	if err != nil {
 		log.Println("procAdminRequest sku", err)
 		fmt.Fprint(w, err)
@@ -182,7 +187,7 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	priority, err := strconv.Atoi(r.FormValue("priority"))
+	priority, err := strconv.Atoi(priorityStr)
 	if err != nil {
 		log.Println("procAdminRequest priority", err)
 		fmt.Fprint(w, err)
@@ -211,7 +216,9 @@ func procAdminRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func procCaptchaRequest(w http.ResponseWriter, r *http.Request) {
-	if r.FormValue("id") == "" {
+	id := r.FormValue("id")
+
+	if id == "" {
 		fmt.Fprint(w, `
 			<html>
 			<body>
@@ -225,9 +232,9 @@ func procCaptchaRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	captcha[r.FormValue("id")] = rand.Int31n(900000) + 100000
+	captcha[id] = rand.Int31n(900000) + 100000
 
-	resp, err := http.Get(fmt.Sprintf(`http://localhost/push?id=%s&message=验证码：%d`, r.FormValue("id"), captcha[r.FormValue("id")]))
+	resp, err := http.Get(fmt.Sprintf(`http://localhost/push?id=%s&message=验证码：%d`, id, captcha[id]))
 	if err != nil {
 		log.Println("procCaptchaRequest Get", err)
 		fmt.Fprint(w, err)
@@ -240,7 +247,10 @@ func procCaptchaRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func procSubscribeRequest(w http.ResponseWriter, r *http.Request) {
-	if r.FormValue("sku") == "" || r.FormValue("alias") == "" {
+	skuStr := r.FormValue("sku")
+	alias := r.FormValue("alias")
+
+	if skuStr == "" || alias == "" {
 		fmt.Fprintf(w, `
 			<html>
 			<body>
@@ -253,19 +263,24 @@ func procSubscribeRequest(w http.ResponseWriter, r *http.Request) {
 			</form>
 			</body>
 			</html>
-			`, r.FormValue("sku"))
+			`, skuStr)
 		return
 	}
 
+	password := r.FormValue("password")
+	keywords := r.FormValue("keywords")
+
+	log.Println("procSubscribeRequest", skuStr, alias, password, keywords)
+
 	var id string
 
-	if err := db.Ins.QueryRow("SELECT id FROM user WHERE alias = ? AND password = ?", r.FormValue("alias"), r.FormValue("password")).Scan(&id); err != nil {
+	if err := db.Ins.QueryRow("SELECT id FROM user WHERE alias = ? AND password = ?", alias, password).Scan(&id); err != nil {
 		log.Println("procSubscribeRequest QueryRow", err)
 		fmt.Fprint(w, err)
 		return
 	}
 
-	sku, err := strconv.Atoi(r.FormValue("sku"))
+	sku, err := strconv.Atoi(skuStr)
 	if err != nil {
 		log.Println("procSubscribeRequest", err)
 		fmt.Fprint(w, err)
@@ -278,13 +293,13 @@ func procSubscribeRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := db.Ins.Exec("INSERT INTO subscribe (id,sku,keywords) VALUES (?,?,?) ON DUPLICATE KEY UPDATE keywords = ?", id, sku, r.FormValue("keywords"), r.FormValue("keywords")); err != nil {
+	if _, err := db.Ins.Exec("INSERT INTO subscribe (id,sku,keywords) VALUES (?,?,?) ON DUPLICATE KEY UPDATE keywords = ?", id, sku, keywords, keywords); err != nil {
 		log.Println("procSubscribeRequest Exec", err)
 		fmt.Fprint(w, err)
 		return
 	}
 
-	fmt.Fprintf(w, "<html><body>订阅成功，<a href='/subscribe' target='_blank'>继续订阅</a> or <a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", r.FormValue("alias"))
+	fmt.Fprintf(w, "<html><body>订阅成功，<a href='/subscribe' target='_blank'>继续订阅</a> or <a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", alias)
 }
 
 func main() {
