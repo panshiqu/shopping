@@ -44,6 +44,7 @@ type IndexArgs struct {
 	Timestamp string
 	Duration  string
 	Sampling  int64
+	Name      string
 
 	InsertTimestamp int64
 }

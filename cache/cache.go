@@ -19,7 +19,7 @@ func init() {
 }
 
 // Update 更新
-func Update(id int64, price float64, content string) (bool, error) {
+func Update(id int64, price float64, content string, name string) (bool, error) {
 	mtx.Lock()
 	defer mtx.Unlock()
 
@@ -27,6 +27,7 @@ func Update(id int64, price float64, content string) (bool, error) {
 	if !ok {
 		args = &define.IndexArgs{
 			SkuID: id,
+			Name:  name,
 		}
 
 		if err := db.Ins.QueryRow("SELECT price,content FROM jd WHERE sku = ? ORDER BY id DESC LIMIT 1", args.SkuID).Scan(&args.Price, &args.Content); err != nil && err != sql.ErrNoRows {

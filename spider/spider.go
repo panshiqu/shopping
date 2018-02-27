@@ -294,7 +294,7 @@ func jdSpider(in int64) error {
 	}
 	price = math.Trunc((price+tax)*100+0.5) / 100
 	content := serializeHTML(jdi, jdpc)
-	push, err := cache.Update(in, price, content)
+	push, err := cache.Update(in, price, content, jdpc.Name)
 	if err == define.ErrDataSame {
 		return nil
 	}
