@@ -92,12 +92,13 @@ func procBindRequest(w http.ResponseWriter, r *http.Request) {
 			<html>
 			<body>
 			<form>
-			<input type="text" name="id">*休闲益智游戏公众号发送 id 获得<br />
+			<input type="text" name="id" size="32">*休闲益智游戏公众号发送 id 获得<br />
 			<input type="text" name="alias">*请设置别名，暂仅支持纯字母组合，不区分大小写<br />
 			<input type="text" name="password">*请设置密码，暂仅支持6位纯数字组合<br />
 			<input type="number" name="captcha"> <a href="/captcha" target="_blank">获取</a><br /><br />
 			<input type="submit" value="绑定">
 			</form>
+			<img src="http://13.250.117.241:8081/qrcode.jpg" alt="休闲益智游戏">
 			</body>
 			</html>
 			`)
@@ -223,7 +224,7 @@ func procCaptchaRequest(w http.ResponseWriter, r *http.Request) {
 			<html>
 			<body>
 			<form>
-			<input type="text" name="id">*休闲益智游戏公众号发送 id 获得<br /><br />
+			<input type="text" name="id" size="32">*休闲益智游戏公众号发送 id 获得<br /><br />
 			<input type="submit" value="获取">
 			</form>
 			</body>
@@ -258,7 +259,7 @@ func procSubscribeRequest(w http.ResponseWriter, r *http.Request) {
 			<input type="number" name="sku" value="%s">*请订阅添加过的商品编号，<a href='/admin' target='_blank'>添加商品</a><br />
 			<input type="text" name="alias">*绑定时输入的别名<br />
 			<input type="text" name="password">*绑定时输入的密码<br />
-			<input type="text" name="keywords">*关键字用于排序<br /><br />
+			<input type="text" name="keywords" size="64">*关键字用于排序<br /><br />
 			<input type="submit" value="订阅">
 			</form>
 			</body>
