@@ -11,7 +11,7 @@
  Target Server Version : 50718
  File Encoding         : utf-8
 
- Date: 02/07/2018 22:56:29 PM
+ Date: 02/27/2018 22:29:50 PM
 */
 
 SET NAMES utf8mb4;
@@ -44,6 +44,28 @@ CREATE TABLE `sku` (
   `max_price` double NOT NULL DEFAULT '0' COMMENT '最高价',
   `insert_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '插入时间',
   PRIMARY KEY (`sku`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+--  Table structure for `subscribe`
+-- ----------------------------
+DROP TABLE IF EXISTS `subscribe`;
+CREATE TABLE `subscribe` (
+  `id` varchar(255) NOT NULL DEFAULT '' COMMENT 'OPENID',
+  `sku` bigint(20) unsigned NOT NULL COMMENT '商品编号',
+  `keywords` varchar(255) NOT NULL DEFAULT '' COMMENT '关键字',
+  PRIMARY KEY (`id`,`sku`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ----------------------------
+--  Table structure for `user`
+-- ----------------------------
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user` (
+  `id` varchar(255) NOT NULL DEFAULT '' COMMENT 'OPENID',
+  `alias` varchar(255) NOT NULL DEFAULT '' COMMENT '别名',
+  `password` varchar(255) NOT NULL DEFAULT '' COMMENT '密码',
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET FOREIGN_KEY_CHECKS = 1;
