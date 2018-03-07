@@ -23,7 +23,7 @@ var aliasMutex sync.Mutex
 var captcha map[string]int32
 
 var index = template.Must(template.New("index").Parse(`<html><body><ul><li>只是来玩游戏的请点击 <a href='http://13.250.117.241:8081' target='_blank'>这里</a></li><li>请搜索 <font color="red">Min</font> 快速浏览当前价格为最低价的商品</li><li>请搜索 <font color="red">京东秒杀</font> 快速浏览正在参与或即将参与秒杀的商品</li></ul><table>
-	{{range .Args}} <tr><td colspan="2"><hr />{{if .IsMinPrice}}<font color="red" size="4">Min</font> {{end}}编号：{{.SkuID}} 价格：<font color="red" size="4">{{.Price}}</font> 刷新时间：{{.Timestamp}} 最低价：{{.MinPrice}} 最高价：{{.MaxPrice}} 已持续：{{.Duration}} 有效采样{{.Sampling}}次 {{if eq $.Alias ""}}<a href='{{printf "/subscribe?sku=%d&keywords=%s" .SkuID .Name}}' target='_blank'>订阅</a>{{else}}删除{{end}}</td></tr>{{.Content}} {{end}}
+	{{range .Args}} <tr><td colspan="2"><hr />{{if .IsMinPrice}}<font color="red" size="4">Min</font> {{end}}编号：{{.SkuID}} 价格：<font color="red" size="4">{{.Price}}</font> 刷新时间：{{.Timestamp}} 最低价：{{.MinPrice}} 最高价：{{.MaxPrice}} 已持续：{{.Duration}} 有效采样{{.Sampling}}次 {{if eq $.Alias ""}}<a href='{{printf "/subscribe?sku=%d&keywords=%s" .SkuID .Name}}' target='_blank'>订阅</a>{{else}}<a href='{{printf "/unsubscribe?sku=%d&alias=%s" .SkuID $.Alias}}' target='_blank'>退订</a>{{end}}</td></tr>{{.Content}} {{end}}
 	</table></body></html>`))
 
 func procRequest(w http.ResponseWriter, r *http.Request) {
@@ -150,7 +150,7 @@ func procBindRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "<html><body>绑定成功，请自主<a href='/subscribe' target='_blank'>订阅商品</a>，然后访问您的<a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", alias)
+	fmt.Fprintf(w, "<html><body>绑定成功，请自主<a href='/subscribe' target='_blank'>订阅商品</a> or <a href='/' target='_blank'>首页快速订阅</a>，然后访问您的<a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", alias)
 }
 
 func procAdminRequest(w http.ResponseWriter, r *http.Request) {
@@ -299,7 +299,47 @@ func procSubscribeRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "<html><body>订阅成功，<a href='/subscribe' target='_blank'>继续订阅</a> or <a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", alias)
+	fmt.Fprintf(w, "<html><body>订阅成功，<a href='/' target='_blank'>首页快速订阅</a> or <a href='/subscribe' target='_blank'>继续订阅</a> or <a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", alias)
+}
+
+func procUnSubscribeRequest(w http.ResponseWriter, r *http.Request) {
+	sku := r.FormValue("sku")
+	alias := r.FormValue("alias")
+	password := r.FormValue("password")
+
+	if password == "" {
+		fmt.Fprintf(w, `
+			<html>
+			<body>
+			<form>
+			<input type="number" name="sku" value="%s">*请退订订阅过的商品编号，<a href='/subscribe' target='_blank'>订阅商品</a><br />
+			<input type="text" name="alias" value="%s">*绑定时输入的别名<br />
+			<input type="text" name="password">*绑定时输入的密码<br /><br />
+			<input type="submit" value="退订">
+			</form>
+			</body>
+			</html>
+			`, sku, alias)
+		return
+	}
+
+	log.Println("procUnSubscribeRequest", sku, alias, password)
+
+	var id string
+
+	if err := db.Ins.QueryRow("SELECT id FROM user WHERE alias = ? AND password = ?", alias, password).Scan(&id); err != nil {
+		log.Println("procUnSubscribeRequest QueryRow", err)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	if _, err := db.Ins.Exec("DELETE FROM subscribe WHERE id = ? AND sku = ?", id, sku); err != nil {
+		log.Println("procUnSubscribeRequest Exec", err)
+		fmt.Fprint(w, err)
+		return
+	}
+
+	fmt.Fprintf(w, "<html><body>退订成功，<a href='/unsubscribe' target='_blank'>继续退订</a> or <a href='/?alias=%s' target='_blank'>专属链接快速退订</a></body></html>", alias)
 }
 
 func main() {
@@ -314,6 +354,7 @@ func main() {
 	http.HandleFunc("/admin", procAdminRequest)
 	http.HandleFunc("/captcha", procCaptchaRequest)
 	http.HandleFunc("/subscribe", procSubscribeRequest)
+	http.HandleFunc("/unsubscribe", procUnSubscribeRequest)
 	http.HandleFunc("/favicon.ico", func(http.ResponseWriter, *http.Request) {})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
