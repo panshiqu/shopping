@@ -150,7 +150,14 @@ func procBindRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "<html><body>绑定成功，请自主<a href='/subscribe' target='_blank'>订阅商品</a> or <a href='/' target='_blank'>首页快速订阅</a>，然后访问您的<a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", alias)
+	if r.FormValue("admin") == "" {
+		fmt.Fprintf(w, "<html><body>绑定成功，请自主<a href='/subscribe' target='_blank'>订阅商品</a> or <a href='/' target='_blank'>首页快速订阅</a>，然后访问您的<a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", alias)
+	} else {
+		fmt.Fprintf(w, `绑定成功
+			首页：http://13.250.117.241:8080/
+			订阅商品：http://13.250.117.241:8080/subscribe
+			专属链接：http://13.250.117.241:8080/?alias=%s`, alias)
+	}
 }
 
 func procAdminRequest(w http.ResponseWriter, r *http.Request) {
