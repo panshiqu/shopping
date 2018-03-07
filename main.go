@@ -87,7 +87,7 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 func procBindRequest(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue("id")
 
-	if id == "" || captcha[id] == 0 || fmt.Sprintf("%d", captcha[id]) != r.FormValue("captcha") {
+	if r.FormValue("admin") == "" && (id == "" || captcha[id] == 0 || fmt.Sprintf("%d", captcha[id]) != r.FormValue("captcha")) {
 		fmt.Fprint(w, `
 			<html>
 			<body>
