@@ -22,7 +22,7 @@ var aliasMutex sync.Mutex
 
 var captcha map[string]int32
 
-var index = template.Must(template.New("index").Parse(`<html><body><ul><li>只是来玩游戏的请点击 <a href='http://13.250.117.241:8081' target='_blank'>这里</a></li><li>请搜索 <font color="red">Min</font> 快速浏览当前价格为最低价的商品</li><li>请搜索 <font color="red">京东秒杀</font> 快速浏览正在参与或即将参与秒杀的商品</li></ul><table>
+var index = template.Must(template.New("index").Parse(`<html><body><ul><li>只是来玩游戏的请点击 <a href='http://www.iplaygame.com.cn:8081' target='_blank'>这里</a></li><li>请搜索 <font color="red">Min</font> 快速浏览当前价格为最低价的商品</li><li>请搜索 <font color="red">京东秒杀</font> 快速浏览正在参与或即将参与秒杀的商品</li></ul><table>
 	{{range .Args}} <tr><td colspan="2"><hr />{{if .IsMinPrice}}<font color="red" size="4">Min</font> {{end}}编号：{{.SkuID}} 价格：<font color="red" size="4">{{.Price}}</font> 刷新时间：{{.Timestamp}} 最低价：{{.MinPrice}} 最高价：{{.MaxPrice}} 已持续：{{.Duration}} 有效采样{{.Sampling}}次 {{if eq $.Alias ""}}<a href='{{printf "/subscribe?sku=%d&keywords=%s" .SkuID .Name}}' target='_blank'>订阅</a>{{else}}<a href='{{printf "/unsubscribe?sku=%d&alias=%s" .SkuID $.Alias}}' target='_blank'>退订</a>{{end}}</td></tr>{{.Content}} {{end}}
 	</table></body></html>`))
 
@@ -98,7 +98,7 @@ func procBindRequest(w http.ResponseWriter, r *http.Request) {
 			<input type="number" name="captcha"> <a href="/captcha" target="_blank">获取</a><br /><br />
 			<input type="submit" value="绑定">
 			</form>
-			<img src="http://13.250.117.241:8081/qrcode.jpg" alt="休闲益智游戏">
+			<img src="http://www.iplaygame.com.cn:8081/qrcode.jpg" alt="休闲益智游戏">
 			</body>
 			</html>
 			`)
@@ -154,9 +154,10 @@ func procBindRequest(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "<html><body>绑定成功，请自主<a href='/subscribe' target='_blank'>订阅商品</a> or <a href='/' target='_blank'>首页快速订阅</a>，然后访问您的<a href='/?alias=%s' target='_blank'>专属链接</a></body></html>", alias)
 	} else {
 		fmt.Fprintf(w, `绑定成功
-			首页：http://13.250.117.241:8080/
-			订阅商品：http://13.250.117.241:8080/subscribe
-			专属链接：http://13.250.117.241:8080/?alias=%s`, alias)
+首页：http://www.iplaygame.com.cn:8080/
+添加商品：http://www.iplaygame.com.cn:8080/admin
+订阅商品：http://www.iplaygame.com.cn:8080/subscribe
+专属链接：http://www.iplaygame.com.cn:8080/?alias=%s`, alias)
 	}
 }
 
