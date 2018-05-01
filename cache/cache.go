@@ -51,7 +51,7 @@ func Update(id int64, price float64, content string, name string) (bool, error) 
 		return false, define.ErrDataSame
 	}
 
-	if price < args.MinPrice || args.MinPrice == 0 {
+	if (price != -0.99) && (price < args.MinPrice || args.MinPrice == 0) {
 		args.MinPrice = price
 
 		if _, err := db.Ins.Exec("UPDATE sku SET min_price = ? WHERE sku = ?", args.MinPrice, args.SkuID); err != nil {
