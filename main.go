@@ -22,7 +22,7 @@ var aliasMutex sync.Mutex
 
 var captcha map[string]int32
 
-var index = template.Must(template.New("index").Parse(`<html><body><ul><li>只是来玩游戏的请点击 <a href='http://www.iplaygame.com.cn:8081' target='_blank'>这里</a></li><li>请搜索 <font color="red">Min</font> 快速浏览当前价格为最低价的商品</li><li>请搜索 <font color="red">京东秒杀</font> 快速浏览正在参与或即将参与秒杀的商品</li></ul><table>
+var index = template.Must(template.New("index").Parse(`<html><body><ul><li>只是来玩游戏的请点击 <a href='http://www.iplaygame.com.cn:8081' target='_blank'>这里</a></li><li>请搜索 <font color="red">Min</font> 快速浏览当前价格为最低价的商品</li><li>请搜索 <font color="red">京东秒杀</font> 快速浏览正在参与或即将参与秒杀的商品</li></ul>{{range $k, $v := .Proms}}{{$k}} {{$v}}<br />{{end}}<table>
 	{{range .Args}} <tr><td colspan="2"><hr />{{if .IsMinPrice}}<font color="red" size="4">Min</font> {{end}}编号：{{.SkuID}} 价格：<font color="red" size="4">{{.Price}}</font> 刷新时间：{{.Timestamp}} 最低价：{{.MinPrice}} 最高价：{{.MaxPrice}} 已持续：{{.Duration}} 有效采样{{.Sampling}}次 {{if eq $.Alias ""}}<a href='{{printf "/subscribe?sku=%d&keywords=%s" .SkuID .Name}}' target='_blank'>订阅</a>{{else}}<a href='{{printf "/unsubscribe?sku=%d&alias=%s" .SkuID $.Alias}}' target='_blank'>退订</a>{{end}}</td></tr>{{.Content}} {{end}}
 	</table></body></html>`))
 
@@ -75,6 +75,15 @@ func procRequest(w http.ResponseWriter, r *http.Request) {
 	data := &define.IndexData{
 		Args:  cache.Select(ids),
 		Alias: alias,
+		Proms: make(map[string]int),
+	}
+
+	for _, v := range data.Args {
+		begin := strings.Index(v.Content, "<!--begin-->") + 12
+		end := strings.Index(v.Content, "<!--end-->")
+		for _, vv := range strings.Split(v.Content[begin:end], "<br />") {
+			data.Proms[vv]++
+		}
 	}
 
 	if err := index.Execute(w, data); err != nil {

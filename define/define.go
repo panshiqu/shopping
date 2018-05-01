@@ -32,6 +32,7 @@ var ErrIllegalPassword = errors.New("illegal password")
 type IndexData struct {
 	Args  []*IndexArgs
 	Alias string
+	Proms map[string]int
 }
 
 // IndexArgs 首页参数

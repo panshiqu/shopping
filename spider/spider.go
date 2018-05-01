@@ -216,7 +216,7 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 	if jdpc.KoEndTime != 0 {
 		fmt.Fprintf(&buf, "<font color='red'>【京东秒杀%s结束】</font>", time.Unix(jdpc.KoEndTime/1000, 0).Format("01-02 15:04"))
 	}
-	fmt.Fprintf(&buf, "<a href='https://item.jd.com/%d.html' target='_blank'>%s</a><br />", jdpc.SkuID, jdpc.Name)
+	fmt.Fprintf(&buf, "<a href='https://item.jd.com/%d.html' target='_blank'>%s</a><br /><!--begin-->", jdpc.SkuID, jdpc.Name)
 	for _, v := range jdi.SkuCoupon {
 		switch v.CouponStyle {
 		case 0:
@@ -241,7 +241,7 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 	if bytes.HasSuffix(buf.Bytes(), []byte("<br />")) {
 		buf.Truncate(buf.Len() - 6)
 	}
-	fmt.Fprintf(&buf, "</td></tr>")
+	fmt.Fprintf(&buf, "<!--end--></td></tr>")
 	return buf.String()
 }
 
