@@ -51,7 +51,14 @@ func Update(id int64, price float64, content string, name string) (bool, error) 
 		return false, define.ErrDataSame
 	}
 
+	var push bool
+
+	if price == args.MinPrice && args.Price != args.MinPrice {
+		push = true
+	}
+
 	if (price != -0.99) && (price < args.MinPrice || args.MinPrice == 0) {
+		push = true
 		args.MinPrice = price
 
 		if _, err := db.Ins.Exec("UPDATE sku SET min_price = ? WHERE sku = ?", args.MinPrice, args.SkuID); err != nil {
@@ -70,7 +77,7 @@ func Update(id int64, price float64, content string, name string) (bool, error) 
 	args.Price = price
 	args.Content = content
 	args.Sampling++
-	return args.IsMinPrice(), nil
+	return push, nil
 }
 
 // Select 查询
