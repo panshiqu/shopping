@@ -14,6 +14,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/panshiqu/framework/utils"
 	"github.com/panshiqu/shopping/cache"
@@ -246,6 +247,8 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 }
 
 func serializeTag(buf *bytes.Buffer, tags []*define.JDTag) {
+	discount := float64(1)
+
 	for _, v := range tags {
 		if len(v.Gifts) != 0 {
 			for _, vv := range v.Gifts {
@@ -256,7 +259,43 @@ func serializeTag(buf *bytes.Buffer, tags []*define.JDTag) {
 		} else {
 			fmt.Fprintf(buf, "【%s】%s<br />", v.Name, v.Content)
 		}
+
+		var dis float64
+		switch v.Code {
+		case "15": // 满减
+			var a, b float64
+			if strings.Contains(v.Content, "选") {
+				fmt.Sscanf(v.Content, "%f元选%f件", &a, &b)
+			} else {
+				s := v.Content
+				if n := strings.LastIndex(s, "最多"); n != -1 {
+					s = s[:n]
+				}
+				if n := strings.LastIndex(s, "满"); n != -1 {
+					s = s[n:]
+				}
+				fmt.Sscanf(formatStr(s), "%f元%f元", &a, &b)
+			}
+		case "19": // 多买优惠
+			if n := strings.LastIndex(v.Content, "打"); n != -1 {
+				fmt.Sscanf(v.Content[n:], "打%f折", &dis)
+			}
+			dis = dis / 10
+		}
+
+		if dis != 0 && dis < discount {
+			discount = dis
+		}
 	}
+}
+
+func formatStr(in string) (out string) {
+	for _, v := range in {
+		if unicode.IsNumber(v) || v == '.' || v == '元' {
+			out += string(v)
+		}
+	}
+	return
 }
 
 func jdSpider(in int64) error {
