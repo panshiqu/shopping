@@ -208,7 +208,7 @@ func getJDTax(in int64) (float64, error) {
 	return strconv.ParseFloat(jdgb.TaxTxt.Content[pos+3:], 64)
 }
 
-func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
+func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig, price float64) (string, float64) {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "<tr><td><a href='https://item.jd.com/%d.html' target='_blank'><img src='%s' /></a></td><td>", jdpc.SkuID, jdpc.Src)
 	if jdpc.KoBeginTime != 0 {
@@ -238,34 +238,33 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig) string {
 	}
 	tags := append(jdi.Prom.PickOneTag, jdi.Prom.Tags...)
 	sort.Sort(define.TagsSlice(tags))
-	serializeTag(&buf, tags)
+	np := serializeTag(&buf, tags, price)
 	if bytes.HasSuffix(buf.Bytes(), []byte("<br />")) {
 		buf.Truncate(buf.Len() - 6)
 	}
 	fmt.Fprintf(&buf, "<!--end--></td></tr>")
-	return buf.String()
+	return buf.String(), np
 }
 
-func serializeTag(buf *bytes.Buffer, tags []*define.JDTag) {
+func serializeTag(buf *bytes.Buffer, tags []*define.JDTag, price float64) float64 {
 	discount := float64(1)
-
 	for _, v := range tags {
 		if len(v.Gifts) != 0 {
 			for _, vv := range v.Gifts {
-				fmt.Fprintf(buf, "【%s】<a href='https://item.jd.com/%s.html' target='_blank'>%s</a>X%d%s<br />", v.Name, vv.Sid, vv.Nm, vv.Num, v.Content)
+				fmt.Fprintf(buf, "【%s】<a href='https://item.jd.com/%s.html' target='_blank'>%s</a>X%d%s", v.Name, vv.Sid, vv.Nm, vv.Num, v.Content)
 			}
 		} else if v.AdURL != "" {
-			fmt.Fprintf(buf, "【%s】<a href='%s' target='_blank'>%s</a><br />", v.Name, v.AdURL, v.Content)
+			fmt.Fprintf(buf, "【%s】<a href='%s' target='_blank'>%s</a>", v.Name, v.AdURL, v.Content)
 		} else {
-			fmt.Fprintf(buf, "【%s】%s<br />", v.Name, v.Content)
+			fmt.Fprintf(buf, "【%s】%s", v.Name, v.Content)
 		}
-
 		var dis float64
 		switch v.Code {
 		case "15": // 满减
 			var a, b float64
 			if strings.Contains(v.Content, "选") {
 				fmt.Sscanf(v.Content, "%f元选%f件", &a, &b)
+				dis = a / b / price
 			} else {
 				s := v.Content
 				if n := strings.LastIndex(s, "最多"); n != -1 {
@@ -275,18 +274,24 @@ func serializeTag(buf *bytes.Buffer, tags []*define.JDTag) {
 					s = s[n:]
 				}
 				fmt.Sscanf(formatStr(s), "%f元%f元", &a, &b)
+				dis = (a - b) / a
 			}
+			fmt.Fprintf(buf, "<!--a=%f,b=%f-->", a, b)
 		case "19": // 多买优惠
 			if n := strings.LastIndex(v.Content, "打"); n != -1 {
 				fmt.Sscanf(v.Content[n:], "打%f折", &dis)
 			}
 			dis = dis / 10
 		}
-
-		if dis != 0 && dis < discount {
-			discount = dis
+		if dis != 0 {
+			fmt.Fprintf(buf, "<!--dis=%f-->", dis)
+			if dis < discount {
+				discount = dis
+			}
 		}
+		fmt.Fprintf(buf, "<br />")
 	}
+	return price * discount
 }
 
 func formatStr(in string) (out string) {
@@ -331,8 +336,8 @@ func jdSpider(in int64) error {
 	if err != nil {
 		return err
 	}
+	content, price := serializeHTML(jdi, jdpc, price)
 	price = math.Trunc((price+tax)*100+0.5) / 100
-	content := serializeHTML(jdi, jdpc)
 	push, err := cache.Update(in, price, content, jdpc.Name)
 	if err == define.ErrDataSame {
 		return nil
