@@ -219,6 +219,9 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig, price float64)
 	}
 	fmt.Fprintf(&buf, "<a href='https://item.jd.com/%d.html' target='_blank'>%s</a><br /><!--begin-->", jdpc.SkuID, jdpc.Name)
 	discount := float64(0.95) // 全品类满200减10
+	if price == -1 {
+		discount = 1 // 商品已下柜
+	}
 	for _, v := range jdi.SkuCoupon {
 		var dis float64
 		switch v.CouponStyle {
