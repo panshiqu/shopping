@@ -218,15 +218,29 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig, price float64)
 		fmt.Fprintf(&buf, "<font color='red'>【京东秒杀%s结束】</font>", time.Unix(jdpc.KoEndTime/1000, 0).Format("01-02 15:04"))
 	}
 	fmt.Fprintf(&buf, "<a href='https://item.jd.com/%d.html' target='_blank'>%s</a><br /><!--begin-->", jdpc.SkuID, jdpc.Name)
+	discount := float64(0.95) // 全品类满200减10
 	for _, v := range jdi.SkuCoupon {
+		var dis float64
 		switch v.CouponStyle {
 		case 0:
-			fmt.Fprintf(&buf, "【满%d减%d】%s %s %s<br />", v.Quota, v.Discount, v.TimeDesc, v.Name, v.OverlapDesc)
+			fmt.Fprintf(&buf, "【满%d减%d】%s %s %s", v.Quota, v.Discount, v.TimeDesc, v.Name, v.OverlapDesc)
+			quota := float64(v.Quota)
+			if price > quota {
+				quota = price
+			}
+			dis = (quota - float64(v.Discount)) / quota
 		case 3:
-			fmt.Fprintf(&buf, "【%s-%s】%s %s %s<br />", v.AllDesc, v.HighDesc, v.TimeDesc, v.Name, v.OverlapDesc)
+			fmt.Fprintf(&buf, "##【%s-%s】%s %s %s", v.AllDesc, v.HighDesc, v.TimeDesc, v.Name, v.OverlapDesc)
 		default:
-			fmt.Fprintf(&buf, "Unknown Coupon Style: %d<br />", v.CouponStyle)
+			fmt.Fprintf(&buf, "Unknown Coupon Style: %d", v.CouponStyle)
 		}
+		if dis != 0 {
+			fmt.Fprintf(&buf, "<!--dis=%f-->", dis)
+			if dis < discount {
+				discount = dis
+			}
+		}
+		fmt.Fprintf(&buf, "<br />")
 	}
 	for _, v := range jdi.Ads {
 		if v.Ad != "" {
@@ -243,7 +257,7 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig, price float64)
 		buf.Truncate(buf.Len() - 6)
 	}
 	fmt.Fprintf(&buf, "<!--end--></td></tr>")
-	return buf.String(), np
+	return buf.String(), np * discount
 }
 
 func serializeTag(buf *bytes.Buffer, tags []*define.JDTag, price float64) float64 {
