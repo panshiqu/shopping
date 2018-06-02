@@ -219,9 +219,6 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig, price float64)
 	}
 	fmt.Fprintf(&buf, "<a href='https://item.jd.com/%d.html' target='_blank'>%s</a><br /><!--begin-->", jdpc.SkuID, jdpc.Name)
 	discount := float64(0.95) // 全品类满200减10
-	if price == -1 {
-		discount = 1 // 商品已下柜
-	}
 	for _, v := range jdi.SkuCoupon {
 		var dis float64
 		switch v.CouponStyle {
@@ -260,7 +257,10 @@ func serializeHTML(jdi *define.JDInfo, jdpc *define.JDPageConfig, price float64)
 		buf.Truncate(buf.Len() - 6)
 	}
 	fmt.Fprintf(&buf, "<!--end--></td></tr>")
-	return buf.String(), np * discount
+	if np != -1 { // 商品未下柜
+		np *= discount
+	}
+	return buf.String(), np
 }
 
 func serializeTag(buf *bytes.Buffer, tags []*define.JDTag, price float64) float64 {
@@ -308,7 +308,10 @@ func serializeTag(buf *bytes.Buffer, tags []*define.JDTag, price float64) float6
 		}
 		fmt.Fprintf(buf, "<br />")
 	}
-	return price * discount
+	if price != -1 { // 商品未下柜
+		price *= discount
+	}
+	return price
 }
 
 func formatStr(in string) (out string) {
